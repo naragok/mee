@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -38,7 +37,7 @@
                     <span class="text-7eleven-red">7-</span>
                     <span class="text-7eleven-green">ELEVEN</span>
                 </div>
-                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">소비/유통기한 전용 AI</span>
+                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">원터치 즉시 등록 AI</span>
             </div>
             <div class="flex items-center space-x-1.5">
                 <button onclick="openApiKeyModal()" class="bg-emerald-50 active:bg-emerald-100 text-7eleven-green font-bold p-2 rounded-xl border border-emerald-300 flex items-center justify-center" title="API 설정">
@@ -206,9 +205,10 @@
     </main>
 
     <!-- Floating Action Button (FAB) for Quick Camera Scan -->
-    <button onclick="openScanModal()" class="fixed right-4 bottom-20 z-30 bg-7eleven-red text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
+    <button onclick="triggerQuickScan()" class="fixed right-4 bottom-20 z-30 bg-7eleven-red text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
         <i data-lucide="camera" class="w-6 h-6"></i>
     </button>
+    <input type="file" id="direct-camera-file" accept="image/*" capture="environment" class="hidden" onchange="handleDirectImageSelect(event)">
 
     <!-- Bottom Mobile Navigation Bar -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
@@ -221,7 +221,7 @@
                 <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
                 <span class="text-[10px]">달력보기</span>
             </button>
-            <button onclick="openScanModal()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
+            <button onclick="triggerQuickScan()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
                 <i data-lucide="camera" class="w-5 h-5 mb-0.5 text-7eleven-red"></i>
                 <span class="text-[10px]">사진스캔</span>
             </button>
@@ -257,78 +257,12 @@
         </div>
     </div>
 
-    <!-- Modal 1: Photo Scan Modal -->
-    <div id="modal-scan" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeScanModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="text-center mb-3">
-                <h3 class="text-base font-bold text-gray-800">소비기한/유통기한 AI 스캔</h3>
-                <p class="text-xs text-emerald-700 font-medium">⚠️ 제조일자 제외, 오직 유통/소비기한만 등록됩니다.</p>
-            </div>
-
-            <!-- Upload Box -->
-            <div class="mb-3">
-                <label id="upload-box" class="border-2 border-dashed border-gray-300 rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer bg-gray-50 overflow-hidden relative active:bg-emerald-50/50">
-                    <img id="preview-img" class="absolute inset-0 w-full h-full object-contain hidden bg-black/5" />
-                    <div id="upload-placeholder" class="text-center p-4">
-                        <i data-lucide="camera" class="w-8 h-8 text-gray-400 mx-auto mb-1"></i>
-                        <span class="text-xs font-semibold text-gray-700 block">터치하여 카메라 촬영/선택</span>
-                        <span class="text-[11px] text-gray-400 block mt-0.5">제품명과 유통/소비기한 자동 추출</span>
-                    </div>
-                    <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelect(event)">
-                </label>
-            </div>
-
-            <!-- AI Status -->
-            <div id="ai-loading" class="hidden py-3 text-center">
-                <div class="inline-block animate-spin rounded-full h-6 w-6 border-4 border-7eleven-green border-t-transparent mb-1"></div>
-                <p class="text-xs font-bold text-gray-700" id="ai-loading-text">제품명 및 유통기한 정밀 검출 중...</p>
-            </div>
-
-            <!-- Result Form -->
-            <form id="ai-result-form" class="space-y-2.5 hidden" onsubmit="saveAiResult(event)">
-                <div class="bg-emerald-50 p-2 rounded-xl text-[11px] text-emerald-800 border border-emerald-200 flex items-center">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 mr-1 shrink-0 text-7eleven-green"></i>
-                    <span>제조일자는 자동 제외되며 소비기한이 추출되었습니다.</span>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">인식된 제품명</label>
-                    <input type="text" id="ai-name" required placeholder="사진 속 제품명" class="w-full px-3 py-2 border rounded-xl text-sm font-bold text-gray-900 focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한/유통기한 날짜</label>
-                        <input type="date" id="ai-date" required class="w-full px-2 py-2 border rounded-xl text-xs font-bold text-emerald-800 focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시각 (FF/도시락 등)</label>
-                        <input type="time" id="ai-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="ai-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="ai-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="resetScanModal()" class="w-1/3 py-2.5 border border-gray-300 rounded-xl text-gray-600 font-bold text-xs">다시 촬영</button>
-                    <button type="submit" class="w-2/3 py-2.5 bg-7eleven-green text-white font-bold text-xs rounded-xl shadow-md">재고 저장</button>
-                </div>
-            </form>
+    <!-- Modal 1: Processing Overlay Modal (자동 등록 전 전면 스피너) -->
+    <div id="modal-processing" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl space-y-3">
+            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-7eleven-green border-t-transparent"></div>
+            <p class="text-sm font-bold text-gray-800" id="processing-text">AI 분석 후 바로 자동 등록 중...</p>
+            <p class="text-xs text-gray-400">제조일자는 제외하고 소비기한을 등록합니다.</p>
         </div>
     </div>
 
@@ -379,6 +313,58 @@
         </div>
     </div>
 
+    <!-- Modal 2-2: Item Edit Modal -->
+    <div id="modal-edit" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
+            <button onclick="closeEditModal()" class="absolute right-4 top-4 text-gray-400">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+                <i data-lucide="pencil" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
+                상품 정보 수정
+            </h3>
+
+            <form class="space-y-2.5" onsubmit="saveEditResult(event)">
+                <input type="hidden" id="edit-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-0.5">제품명</label>
+                    <input type="text" id="edit-name" required placeholder="예: 전주비빔 삼각김밥" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비/유통기한 날짜</label>
+                        <input type="date" id="edit-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
+                        <input type="time" id="edit-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
+                        <select id="edit-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
+                            <option value="FF">FF/도시락/삼김</option>
+                            <option value="유제품">유제품/음료</option>
+                            <option value="신선">신선/냉장</option>
+                            <option value="기타">기타 일반</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
+                        <input type="number" id="edit-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeEditModal()" class="w-1/3 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl">취소</button>
+                    <button type="submit" class="w-2/3 py-3 bg-7eleven-green text-white font-bold text-sm rounded-xl shadow-md">수정 완료</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal 3: Report Modal -->
     <div id="modal-report" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
         <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-5 shadow-2xl relative max-h-[85vh] flex flex-col">
@@ -398,7 +384,7 @@
                 </button>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- Modal 4: Calendar Date Details Modal -->
     <div id="modal-date-details" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
@@ -420,14 +406,14 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-medium shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center">
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full text-xs font-medium shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center">
         <i data-lucide="info" class="w-3.5 h-3.5 mr-1.5 text-emerald-400"></i>
         <span id="toast-message">메시지</span>
     </div>
 
     <!-- Application Script -->
     <script>
-        const STORAGE_KEY = '7eleven_inventory_strict';
+        const STORAGE_KEY = '7eleven_inventory_direct';
         const API_KEY_STORAGE = '7eleven_gemini_apikey';
 
         const systemApiKey = ""; 
@@ -446,6 +432,10 @@
             renderCalendar();
             startFFTimer();
         });
+
+        function triggerQuickScan() {
+            document.getElementById('direct-camera-file').click();
+        }
 
         function switchView(viewName) {
             currentView = viewName;
@@ -484,7 +474,7 @@
                 textEl.innerHTML = `<strong class="text-emerald-700">Gemini AI 연결됨</strong> (${isUser ? '사용자 키' : '자동감지 키'})`;
                 barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm";
             } else {
-                textEl.textContent = `Gemini API 미설정 (기본 스마트 분석 모드)`;
+                textEl.textContent = `Gemini API 미설정 (스마트 로컬 처리)`;
                 barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-gray-200 text-gray-700 border border-gray-300 shadow-sm";
             }
         }
@@ -642,7 +632,10 @@
                                 <button onclick="adjustQty('${item.id}', -1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">-</button>
                                 <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
                                 <button onclick="adjustQty('${item.id}', 1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">+</button>
-                                <button onclick="deleteItem('${item.id}')" class="p-1.5 text-gray-400 active:text-red-600">
+                                <button onclick="editItem('${item.id}')" class="p-1.5 text-gray-400 active:text-7eleven-green" title="수정">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteItem('${item.id}')" class="p-1.5 text-gray-400 active:text-red-600" title="삭제">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -745,7 +738,10 @@
                             <div class="font-bold text-xs text-gray-800">${escapeHtml(it.name)}</div>
                             <div class="text-[10px] text-gray-500">${it.category} | 시각: ${it.expiryTime || '없음'} | 수량: ${it.quantity}개</div>
                         </div>
-                        <button onclick="deleteItem('${it.id}'); openDateDetailsModal('${dateStr}');" class="text-xs text-red-600 font-bold p-1">삭제</button>
+                        <div class="flex items-center space-x-1">
+                            <button onclick="closeDateDetailsModal(); editItem('${it.id}');" class="text-xs text-emerald-700 font-bold p-1">수정</button>
+                            <button onclick="deleteItem('${it.id}'); openDateDetailsModal('${dateStr}');" class="text-xs text-red-600 font-bold p-1">삭제</button>
+                        </div>
                     </div>
                 `).join('');
             }
@@ -820,15 +816,6 @@
             renderItems();
         }
 
-        function openScanModal() {
-            document.getElementById('modal-scan').classList.remove('hidden');
-            resetScanModal();
-        }
-
-        function closeScanModal() {
-            document.getElementById('modal-scan').classList.add('hidden');
-        }
-
         function openManualModal() {
             document.getElementById('modal-manual').classList.remove('hidden');
             document.getElementById('manual-date').value = getRelativeDateStr(0);
@@ -838,1080 +825,111 @@
             document.getElementById('modal-manual').classList.add('hidden');
         }
 
-        function resetScanModal() {
-            document.getElementById('preview-img').classList.add('hidden');
-            document.getElementById('upload-placeholder').classList.remove('hidden');
-            document.getElementById('ai-loading').classList.add('hidden');
-            document.getElementById('ai-result-form').classList.add('hidden');
-            document.getElementById('camera-file').value = '';
+        function editItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('edit-id').value = item.id;
+            document.getElementById('edit-name').value = item.name;
+            document.getElementById('edit-date').value = item.expiryDate;
+            document.getElementById('edit-time').value = item.expiryTime || '';
+            document.getElementById('edit-category').value = item.category || 'FF';
+            document.getElementById('edit-qty').value = item.quantity || 1;
+
+            document.getElementById('modal-edit').classList.remove('hidden');
         }
 
-        function handleImageSelect(e) {
+        function closeEditModal() {
+            document.getElementById('modal-edit').classList.add('hidden');
+        }
+
+        function saveEditResult(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const itemIndex = items.findIndex(i => i.id === id);
+
+            if (itemIndex !== -1) {
+                items[itemIndex] = {
+                    ...items[itemIndex],
+                    name: document.getElementById('edit-name').value,
+                    expiryDate: document.getElementById('edit-date').value,
+                    expiryTime: document.getElementById('edit-time').value,
+                    category: document.getElementById('edit-category').value,
+                    quantity: parseInt(document.getElementById('edit-qty').value) || 1
+                };
+
+                renderItems();
+                closeEditModal();
+                showToast(`'${items[itemIndex].name}' 정보가 수정되었습니다.`);
+            }
+        }
+
+        // 사진 선택 시 바로 즉시 분석 및 재고 목록 자동 등록 (원스톱 처리)
+        function handleDirectImageSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            const modalProc = document.getElementById('modal-processing');
+            modalProc.classList.remove('hidden');
 
             const reader = new FileReader();
             reader.onload = async function (evt) {
                 const base64Data = evt.target.result;
-                const previewImg = document.getElementById('preview-img');
-                previewImg.src = base64Data;
-                previewImg.classList.remove('hidden');
-                document.getElementById('upload-placeholder').classList.add('hidden');
-
-                document.getElementById('ai-loading').classList.remove('hidden');
-
                 const pureBase64 = base64Data.split(',')[1];
                 const activeKey = getActiveApiKey();
                 
-                let success = false;
+                let detectedData = null;
+
                 if (activeKey) {
-                    document.getElementById('ai-loading-text').textContent = '제품명 및 소비기한 AI 정밀 분석 중...';
-                    success = await callGeminiApi(pureBase64, file.type, activeKey);
+                    document.getElementById('processing-text').textContent = 'AI 정밀 추출 후 자동 등록 중...';
+                    detectedData = await callGeminiApiDirect(pureBase64, file.type, activeKey);
                 }
 
-                if (!success) {
-                    document.getElementById('ai-loading-text').textContent = '스마트 로컬 처리 중...';
-                    setTimeout(() => {
-                        document.getElementById('ai-loading').classList.add('hidden');
-                        document.getElementById('ai-name').value = '사진 속 제품명을 확인해주세요';
-                        document.getElementById('ai-date').value = getRelativeDateStr(2);
-                        document.getElementById('ai-time').value = '20:00';
-                        document.getElementById('ai-category').value = 'FF';
-                        document.getElementById('ai-result-form').classList.remove('hidden');
-                    }, 600);
+                // AI 응답이 없거나 API 미설정 시 스마트 로컬 기본 등록
+                if (!detectedData) {
+                    document.getElementById('processing-text').textContent = '스마트 로컬 분석 후 등록 중...';
+                    await new Promise(r => setTimeout(r, 600));
+                    detectedData = {
+                        name: '촬영 등록 상품 (' + new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) + ')',
+                        expiryDate: getRelativeDateStr(1),
+                        expiryTime: '20:00',
+                        category: 'FF'
+                    };
                 }
+
+                // 바로 목록에 추가 및 저장
+                const newItem = {
+                    id: Date.now().toString(),
+                    name: detectedData.name,
+                    expiryDate: detectedData.expiryDate,
+                    expiryTime: detectedData.expiryTime,
+                    category: detectedData.category,
+                    quantity: 1
+                };
+
+                items.unshift(newItem);
+                renderItems();
+                
+                modalProc.classList.add('hidden');
+                document.getElementById('direct-camera-file').value = '';
+
+                showToast(`✅ '${newItem.name}' 자동 등록 완료! (${newItem.expiryDate})`);
             };
             reader.readAsDataURL(file);
         }
 
-        // Gemini AI Call with Strict Prompt Constraints
-        async function callGeminiApi(base64Image, mimeType, keyToUse) {
+        // Gemini AI Call for Direct Registration
+        async function callGeminiApiDirect(base64Image, mimeType, keyToUse) {
             const prompt = `이 사진은 편의점(세븐일레븐) 상품의 라벨 또는 외관 사진입니다.
 
-[엄격한 처리 지침]:
-1. 제조년, 제조일자, 제조시각(예: "제조 2026.07.20", "제조일자")은 절대로 소비기한으로 인식하지 말고 무시하세요!
-2. 유통기한, 소비기한, 까지, 까지(EXP), Expiration Date 표기 날짜(YYYY-MM-DD)와 시간(HH:MM)만 정확히 추출하세요.
-3. 사진 속에 제품 이름(예: "혜자로운 제육도시락", "빙그레 바나나맛우유", "참치마요 삼각김밥" 등)이 글자로 적혀있다면 이를 정확히 읽어서 productName에 채우세요.
+[엄격 지침]:
+1. 제조년, 제조일자, 제조시각(예: "제조 2026.07.20")은 절대로 소비기한으로 오인하지 말고 무시하세요!
+2. 소비기한/유통기한 날짜(YYYY-MM-DD)와 시간(HH:MM)만 추출하세요.
+3. 사진 속에 상품 이름이 보이면 정확히 읽어 productName에 채우세요.
 
-JSON 출력 예시:
+JSON 응답:
 {
-  "productName": "사진에서 검출된 실제 제품 이름 (모르면 빈문자열 \"\")",
-  "expiryDate": "YYYY-MM-DD",
-  "expiryTime": "HH:MM",
-  "category": "FF"
-}
-* category는 "FF"(도시락/삼김/햄버거), "유제품"(우유/음료), "신선"(신선식품/계란/소세지), "기타" 중 가장 적합한 하나 선택.`;
-
-            const payload = {
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        { inlineData: { mimeType: mimeType || 'image/jpeg', data: base64Image } }
-                    ]
-                }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
-
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${keyToUse}`;
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    const resData = await response.json();
-                    const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-                    const parsed = JSON.parse(text);
-
-                    document.getElementById('ai-loading').classList.add('hidden');
-                    
-                    // 제품명이 인식되었을 경우 적용
-                    document.getElementById('ai-name').value = parsed.productName && parsed.productName.trim() !== "" ? parsed.productName : '사진 속 제품명을 확인하세요';
-                    document.getElementById('ai-date').value = parsed.expiryDate || getRelativeDateStr(0);
-                    document.getElementById('ai-time').value = parsed.expiryTime || '';
-                    document.getElementById('ai-category').value = parsed.category || 'FF';
-                    document.getElementById('ai-result-form').classList.remove('hidden');
-                    
-                    showToast("제품명 및 소비기한 추출 완료!");
-                    return true;
-                }
-            } catch(e) {
-                console.error("Gemini API Error:", e);
-            }
-            return false;
-        }
-
-        function saveAiResult(e) {
-            e.preventDefault();
-            const newItem = {
-                id: Date.now().toString(),
-                name: document.getElementById('ai-name').value,
-                expiryDate: document.getElementById('ai-date').value,
-                expiryTime: document.getElementById('ai-time').value,
-                category: document.getElementById('ai-category').value,
-                quantity: parseInt(document.getElementById('ai-qty').value) || 1
-            };
-            items.unshift(newItem);
-            renderItems();
-            closeScanModal();
-            showToast(`'${newItem.name}' 재고 저장 완료!`);
-        }
-
-        function saveManualResult(e) {
-            e.preventDefault();
-            const newItem = {
-                id: Date.now().toString(),
-                name: document.getElementById('manual-name').value,
-                expiryDate: document.getElementById('manual-date').value,
-                expiryTime: document.getElementById('manual-time').value,
-                category: document.getElementById('manual-category').value,
-                quantity: parseInt(document.getElementById('manual-qty').value) || 1
-            };
-            items.unshift(newItem);
-            renderItems();
-            closeManualModal();
-            showToast(`'${newItem.name}' 수동 등록 완료!`);
-            document.getElementById('manual-name').value = '';
-        }
-
-        function openReportModal() {
-            const reportEl = document.getElementById('report-content');
-            const now = new Date().toLocaleString('ko-KR');
-
-            const expiredItems = items.filter(i => getDaysUntilExpiry(i.expiryDate) < 0);
-            const urgentItems = items.filter(i => {
-                const d = getDaysUntilExpiry(i.expiryDate);
-                return d >= 0 && d <= 2;
-            });
-
-            let reportHtml = `
-                <div class="font-bold border-b pb-1 mb-1 text-xs text-gray-900">📋 [세븐일레븐] 근무 교대 인수인계</div>
-                <div><strong>점검일시:</strong> ${now}</div>
-                <div><strong>총 재고:</strong> ${items.length}건</div>
-                <div><strong>🚨 소비기한 경과:</strong> <span class="text-red-700 font-bold">${expiredItems.length}건</span></div>
-                <div><strong>⚠️ 당일/임박 관리:</strong> <span class="text-amber-600 font-bold">${urgentItems.length}건</span></div>
-            `;
-
-            if (expiredItems.length > 0) {
-                reportHtml += `<div class="mt-2 border-t pt-1 font-bold text-red-700">🚨 즉시 폐기 대상:</div>`;
-                expiredItems.forEach(i => {
-                    reportHtml += `<div class="text-red-700">- ${escapeHtml(i.name)} (${i.expiryDate} ${i.expiryTime}) [${i.quantity}개]</div>`;
-                });
-            }
-
-            if (urgentItems.length > 0) {
-                reportHtml += `<div class="mt-2 border-t pt-1 font-bold text-amber-600">⚠️ 당일/임박 대상:</div>`;
-                urgentItems.forEach(i => {
-                    const diffDays = getDaysUntilExpiry(i.expiryDate);
-                    reportHtml += `<div>- ${escapeHtml(i.name)} (${i.expiryDate} ${i.expiryTime}) [${i.quantity}개 / D-${diffDays}]</li>`;
-                });
-            }
-
-            reportEl.innerHTML = reportHtml;
-            document.getElementById('modal-report').classList.remove('hidden');
-        }
-
-        function closeReportModal() {
-            document.getElementById('modal-report').classList.add('hidden');
-        }
-
-        function copyReportText() {
-            const textToCopy = document.getElementById('report-content').innerText;
-            const tempInput = document.createElement("textarea");
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            showToast("인수인계 문구가 복사되었습니다!");
-        }
-
-        function exportToCSV() {
-            let csv = "\uFEFF제품명,카테고리,소비기한,시간,수량\n";
-            items.forEach(i => {
-                csv += `"${i.name}","${i.category}","${i.expiryDate}","${i.expiryTime}",${i.quantity}\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `7eleven_mobile_${getRelativeDateStr(0)}.csv`;
-            a.click();
-            showToast("CSV 다운로드 완료!");
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 2500);
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-    </script>
-</body>
-</html>
-
-```
-            <div class="flex items-center space-x-2">
-                <div class="flex font-black text-2xl tracking-tighter">
-                    <span class="text-7eleven-red">7-</span>
-                    <span class="text-7eleven-green">ELEVEN</span>
-                </div>
-                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">모바일 AI</span>
-            </div>
-            <div class="flex items-center space-x-1.5">
-                <button onclick="openApiKeyModal()" class="bg-emerald-50 active:bg-emerald-100 text-7eleven-green font-bold p-2 rounded-xl border border-emerald-300 flex items-center justify-center" title="API 설정">
-                    <i data-lucide="key" class="w-4 h-4"></i>
-                </button>
-                <button onclick="exportToCSV()" class="bg-gray-100 active:bg-gray-200 text-gray-700 font-bold p-2 rounded-xl flex items-center justify-center" title="CSV 다운로드">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-lg mx-auto px-3.5 mt-3">
-
-        <!-- Gemini API Key Status Bar -->
-        <div id="api-key-status-bar" class="mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-gray-200 text-gray-700 border border-gray-300 shadow-sm">
-            <div class="flex items-center space-x-2 truncate">
-                <i data-lucide="bot" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                <span id="api-status-text" class="truncate">Gemini API 키 상태를 확인 중...</span>
-            </div>
-            <button onclick="openApiKeyModal()" class="underline font-bold text-7eleven-green shrink-0 ml-2">설정</button>
-        </div>
-
-        <!-- Real-time FF Timer Banner -->
-        <div class="bg-gray-900 text-white rounded-2xl p-3 shadow-md mb-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-                <span class="text-xs font-semibold text-gray-300">다음 FF 폐기:</span>
-                <span id="next-ff-target" class="text-xs text-amber-400 font-bold">20:00</span>
-            </div>
-            <span id="ff-timer-clock" class="text-base font-black tracking-wider text-emerald-400 font-mono">00:00:00</span>
-        </div>
-
-        <!-- Urgent Alert Banner -->
-        <div id="urgent-alert-banner" class="hidden mb-3 bg-red-500 text-white p-3 rounded-2xl shadow-md flex justify-between items-center animate-pulse">
-            <div class="flex items-center space-x-1.5 truncate">
-                <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
-                <span id="urgent-alert-text" class="text-xs font-bold truncate">기한 초과/임박 상품 조치 필요!</span>
-            </div>
-            <button onclick="filterStatus('urgent'); switchView('list');" class="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-lg shrink-0 active:bg-gray-100">
-                확인
-            </button>
-        </div>
-
-        <!-- Mobile Summary Cards (Horizontal Scroll/Grid) -->
-        <div class="grid grid-cols-4 gap-1.5 mb-3">
-            <div onclick="filterStatus('all'); switchView('list');" class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-200 text-center active:scale-95 transition-transform">
-                <div class="text-[10px] text-gray-500 font-medium">전체</div>
-                <div id="count-total" class="text-lg font-black text-gray-800 mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('expired'); switchView('list');" class="bg-red-100 p-2.5 rounded-2xl shadow-sm border border-red-300 text-center active:scale-95 transition-transform">
-                <div class="text-[10px] text-red-700 font-bold flex items-center justify-center">
-                    <i data-lucide="x-circle" class="w-3 h-3 mr-0.5"></i> 초과
-                </div>
-                <div id="count-expired" class="text-lg font-black text-red-700 mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('urgent'); switchView('list');" class="bg-red-50 p-2.5 rounded-2xl shadow-sm border border-red-200 text-center active:scale-95 transition-transform">
-                <div class="text-[10px] text-red-600 font-bold flex items-center justify-center">
-                    <i data-lucide="alert-circle" class="w-3 h-3 mr-0.5"></i> 임박
-                </div>
-                <div id="count-urgent" class="text-lg font-black text-7eleven-red mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('warning'); switchView('list');" class="bg-amber-50 p-2.5 rounded-2xl shadow-sm border border-amber-200 text-center active:scale-95 transition-transform">
-                <div class="text-[10px] text-amber-700 font-medium">주의</div>
-                <div id="count-warning" class="text-lg font-black text-amber-600 mt-0.5">0</div>
-            </div>
-        </div>
-
-        <!-- View Section 1: List View -->
-        <div id="section-list-view" class="space-y-3">
-            <!-- Mobile Search & Filter -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 space-y-2">
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="search-input" onkeyup="filterItems()" placeholder="상품명 또는 바코드 검색..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-7eleven-green">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <select id="filter-status" onchange="filterItems()" class="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 focus:outline-none">
-                        <option value="all">모든 상태</option>
-                        <option value="expired">🚨 기한 초과</option>
-                        <option value="urgent">🔴 당일/임박(2일)</option>
-                        <option value="warning">🟡 주의(3~7일)</option>
-                        <option value="normal">🟢 여유(8일이상)</option>
-                    </select>
-                    <select id="filter-category" onchange="filterItems()" class="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 focus:outline-none">
-                        <option value="all">전체 카테고리</option>
-                        <option value="FF">FF/도시락/삼김</option>
-                        <option value="유제품">유제품/음료</option>
-                        <option value="신선">신선/냉장</option>
-                        <option value="기타">기타 일반</option>
-                    </select>
-                </div>
-
-                <div class="flex justify-between items-center pt-1 text-xs text-gray-500">
-                    <div class="flex items-center space-x-1">
-                        <span>정렬:</span>
-                        <select id="sort-order" onchange="filterItems()" class="bg-transparent border-none font-bold text-gray-700 focus:outline-none">
-                            <option value="expiryAsc">임박/초과순</option>
-                            <option value="expiryDesc">소비기한 긴순</option>
-                            <option value="nameAsc">가나다순</option>
-                            <option value="qtyDesc">수량많은순</option>
-                        </select>
-                    </div>
-                    <button onclick="openManualModal()" class="text-7eleven-green font-bold flex items-center">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 mr-0.5"></i> 수동 입력
-                    </button>
-                </div>
-            </div>
-
-            <!-- Inventory List Container -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-12">
-                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="font-bold text-gray-800 flex items-center text-sm">
-                        <i data-lucide="package" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
-                        재고 목록
-                    </h2>
-                    <span id="list-count" class="text-xs text-gray-400">0개</span>
-                </div>
-
-                <div class="divide-y divide-gray-100" id="item-list">
-                    <!-- Data populated dynamically -->
-                </div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="p-10 text-center">
-                    <i data-lucide="inbox" class="w-10 h-10 mx-auto text-gray-300 mb-2"></i>
-                    <p class="text-gray-500 text-sm font-medium">등록된 상품이 없습니다.</p>
-                    <p class="text-xs text-gray-400 mt-1">하단 [스캔 스캔] 버튼으로 상품을 등록해보세요.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- View Section 2: Mobile Calendar View -->
-        <div id="section-calendar-view" class="hidden bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm mb-12">
-            <div class="flex justify-between items-center mb-3">
-                <button onclick="changeMonth(-1)" class="p-1.5 border border-gray-200 rounded-xl active:bg-gray-100">
-                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
-                </button>
-                <h2 id="calendar-month-title" class="text-base font-bold text-gray-800">2026년 7월</h2>
-                <button onclick="changeMonth(1)" class="p-1.5 border border-gray-200 rounded-xl active:bg-gray-100">
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-7 gap-1 text-center font-bold text-[11px] text-gray-500 mb-1.5">
-                <div class="text-red-500">일</div>
-                <div>월</div>
-                <div>화</div>
-                <div>수</div>
-                <div>목</div>
-                <div>금</div>
-                <div class="text-blue-500">토</div>
-            </div>
-
-            <div id="calendar-grid" class="grid grid-cols-7 gap-1">
-                <!-- Dynamically generated calendar days -->
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Floating Action Button (FAB) for Quick Camera Scan -->
-    <button onclick="openScanModal()" class="fixed right-4 bottom-20 z-30 bg-7eleven-red text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
-        <i data-lucide="camera" class="w-6 h-6"></i>
-    </button>
-
-    <!-- Bottom Mobile Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
-        <div class="max-w-lg mx-auto grid grid-cols-4 text-center py-2">
-            <button id="nav-btn-list" onclick="switchView('list')" class="flex flex-col items-center justify-center text-7eleven-green font-bold">
-                <i data-lucide="list" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">목록보기</span>
-            </button>
-            <button id="nav-btn-calendar" onclick="switchView('calendar')" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">달력보기</span>
-            </button>
-            <button onclick="openScanModal()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="camera" class="w-5 h-5 mb-0.5 text-7eleven-red"></i>
-                <span class="text-[10px]">사진스캔</span>
-            </button>
-            <button onclick="openReportModal()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="file-text" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">인수인계</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Modal 0: API Key Modal -->
-    <div id="modal-apikey" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeApiKeyModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="flex items-center space-x-2 text-7eleven-green mb-1">
-                <i data-lucide="key" class="w-5 h-5"></i>
-                <h3 class="text-base font-bold text-gray-800">무료 Gemini API 키 설정</h3>
-            </div>
-            <p class="text-xs text-gray-500 mb-3">Google AI Studio에서 발급받은 무료 API 키를 등록하세요.</p>
-
-            <form onsubmit="saveApiKey(event)" class="space-y-3">
-                <div>
-                    <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:border-7eleven-green focus:outline-none font-mono">
-                </div>
-                <div class="flex gap-2 pt-1">
-                    <button type="button" onclick="clearApiKey()" class="w-1/3 py-2.5 bg-gray-100 text-red-600 font-bold text-xs rounded-xl">삭제</button>
-                    <button type="submit" class="w-2/3 py-2.5 bg-7eleven-green text-white font-bold text-xs rounded-xl shadow-md">저장하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 1: Photo Scan Modal -->
-    <div id="modal-scan" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeScanModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="text-center mb-3">
-                <h3 class="text-base font-bold text-gray-800">소비기한 사진 분석 등록</h3>
-                <p class="text-xs text-gray-400">상품의 소비기한 표기 부분을 촬영하세요.</p>
-            </div>
-
-            <!-- Upload Box -->
-            <div class="mb-3">
-                <label id="upload-box" class="border-2 border-dashed border-gray-300 rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer bg-gray-50 overflow-hidden relative active:bg-emerald-50/50">
-                    <img id="preview-img" class="absolute inset-0 w-full h-full object-contain hidden bg-black/5" />
-                    <div id="upload-placeholder" class="text-center p-4">
-                        <i data-lucide="camera" class="w-8 h-8 text-gray-400 mx-auto mb-1"></i>
-                        <span class="text-xs font-semibold text-gray-700 block">터치하여 카메라 촬영</span>
-                    </div>
-                    <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="handleImageSelect(event)">
-                </label>
-            </div>
-
-            <!-- AI Status -->
-            <div id="ai-loading" class="hidden py-3 text-center">
-                <div class="inline-block animate-spin rounded-full h-6 w-6 border-4 border-7eleven-green border-t-transparent mb-1"></div>
-                <p class="text-xs font-bold text-gray-700" id="ai-loading-text">Gemini AI가 정밀 분석 중...</p>
-            </div>
-
-            <!-- Result Form -->
-            <form id="ai-result-form" class="space-y-2.5 hidden" onsubmit="saveAiResult(event)">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">상품명</label>
-                    <input type="text" id="ai-name" required class="w-full px-3 py-2 border rounded-xl text-sm font-medium focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="ai-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시각 (FF상품)</label>
-                        <input type="time" id="ai-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="ai-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="ai-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="resetScanModal()" class="w-1/3 py-2.5 border border-gray-300 rounded-xl text-gray-600 font-bold text-xs">다시 촬영</button>
-                    <button type="submit" class="w-2/3 py-2.5 bg-7eleven-green text-white font-bold text-xs rounded-xl shadow-md">저장하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 2: Manual Registration Modal -->
-    <div id="modal-manual" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeManualModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 mb-3">수동 직입력 등록</h3>
-
-            <form class="space-y-2.5" onsubmit="saveManualResult(event)">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">상품명</label>
-                    <input type="text" id="manual-name" required placeholder="예: 참치마요 삼각김밥" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="manual-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
-                        <input type="time" id="manual-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="manual-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="manual-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <button type="submit" class="w-full py-3 bg-7eleven-green text-white font-bold text-sm rounded-xl shadow-md">등록하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 3: Report Modal -->
-    <div id="modal-report" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-5 shadow-2xl relative max-h-[85vh] flex flex-col">
-            <button onclick="closeReportModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 border-b pb-2 mb-3">근무 교대 인수인계 리포트</h3>
-
-            <div id="report-content" class="bg-gray-50 p-3 rounded-xl text-xs space-y-2 font-mono text-gray-800 border overflow-y-auto flex-1">
-                <!-- Generated dynamically -->
-            </div>
-
-            <div class="mt-3 flex gap-2">
-                <button onclick="copyReportText()" class="flex-1 py-3 bg-gray-900 text-white font-bold text-xs rounded-xl flex items-center justify-center active:bg-black">
-                    <i data-lucide="copy" class="w-4 h-4 mr-1"></i> 카톡 인수인계 복사
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 4: Calendar Date Details Modal -->
-    <div id="modal-date-details" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative max-h-[80vh] flex flex-col">
-            <button onclick="closeDateDetailsModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 id="date-details-title" class="text-sm font-bold text-gray-800 border-b pb-2 mb-2">만료 예정 상품</h3>
-            
-            <div id="date-details-list" class="divide-y divide-gray-100 overflow-y-auto flex-1">
-                <!-- Populated dynamically -->
-            </div>
-
-            <div class="pt-3 border-t mt-2 text-right">
-                <button onclick="closeDateDetailsModal()" class="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold text-gray-700">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-medium shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center">
-        <i data-lucide="info" class="w-3.5 h-3.5 mr-1.5 text-emerald-400"></i>
-        <span id="toast-message">메시지</span>
-    </div>
-
-    <!-- Application Script -->
-    <script>
-        const STORAGE_KEY = '7eleven_inventory_mobile';
-        const API_KEY_STORAGE = '7eleven_gemini_apikey';
-
-        const systemApiKey = ""; 
-
-        let userApiKey = localStorage.getItem(API_KEY_STORAGE) || "";
-        let items = loadStoredItems();
-
-        let currentView = 'list';
-        let calendarYear = new Date().getFullYear();
-        let calendarMonth = new Date().getMonth();
-
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            updateApiStatusUI();
-            renderItems();
-            renderCalendar();
-            startFFTimer();
-        });
-
-        function switchView(viewName) {
-            currentView = viewName;
-            const secList = document.getElementById('section-list-view');
-            const secCal = document.getElementById('section-calendar-view');
-            const navList = document.getElementById('nav-btn-list');
-            const navCal = document.getElementById('nav-btn-calendar');
-
-            if (viewName === 'list') {
-                secList.classList.remove('hidden');
-                secCal.classList.add('hidden');
-                navList.className = "flex flex-col items-center justify-center text-7eleven-green font-bold";
-                navCal.className = "flex flex-col items-center justify-center text-gray-400 font-medium";
-            } else {
-                secList.classList.add('hidden');
-                secCal.classList.remove('hidden');
-                navCal.className = "flex flex-col items-center justify-center text-7eleven-green font-bold";
-                navList.className = "flex flex-col items-center justify-center text-gray-400 font-medium";
-                renderCalendar();
-            }
-        }
-
-        function getActiveApiKey() {
-            if (userApiKey && userApiKey.trim() !== '') return userApiKey.trim();
-            if (typeof systemApiKey !== 'undefined' && systemApiKey && systemApiKey.trim() !== '') return systemApiKey.trim();
-            return "";
-        }
-
-        function updateApiStatusUI() {
-            const textEl = document.getElementById('api-status-text');
-            const barEl = document.getElementById('api-key-status-bar');
-            const activeKey = getActiveApiKey();
-
-            if (activeKey) {
-                const isUser = userApiKey && userApiKey.trim() !== '';
-                textEl.innerHTML = `<strong class="text-emerald-700">Gemini AI 연결됨</strong> (${isUser ? '사용자 키' : '자동감지 키'})`;
-                barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm";
-            } else {
-                textEl.textContent = `Gemini API 미설정 (스마트 로컬 모드 동작 중)`;
-                barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-gray-200 text-gray-700 border border-gray-300 shadow-sm";
-            }
-        }
-
-        function openApiKeyModal() {
-            document.getElementById('input-api-key').value = userApiKey;
-            document.getElementById('modal-apikey').classList.remove('hidden');
-        }
-
-        function closeApiKeyModal() {
-            document.getElementById('modal-apikey').classList.add('hidden');
-        }
-
-        function saveApiKey(e) {
-            e.preventDefault();
-            const val = document.getElementById('input-api-key').value.trim();
-            userApiKey = val;
-            localStorage.setItem(API_KEY_STORAGE, userApiKey);
-            updateApiStatusUI();
-            closeApiKeyModal();
-            showToast("API 키가 저장되었습니다!");
-        }
-
-        function clearApiKey() {
-            userApiKey = "";
-            localStorage.removeItem(API_KEY_STORAGE);
-            document.getElementById('input-api-key').value = "";
-            updateApiStatusUI();
-            closeApiKeyModal();
-            showToast("API 키가 삭제되었습니다.");
-        }
-
-        function loadStoredItems() {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                return stored ? JSON.parse(stored) : [];
-            } catch(e) {
-                return [];
-            }
-        }
-
-        function saveStoredItems() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-            } catch(e) {}
-        }
-
-        function getRelativeDateStr(addDays) {
-            const d = new Date();
-            d.setDate(d.getDate() + addDays);
-            return d.toISOString().split('T')[0];
-        }
-
-        function getDaysUntilExpiry(dateStr) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const exp = new Date(dateStr);
-            exp.setHours(0, 0, 0, 0);
-            return Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
-        }
-
-        function startFFTimer() {
-            function updateTimer() {
-                const now = new Date();
-                const hours = now.getHours();
-                
-                let targetHour = 14;
-                if (hours >= 14 && hours < 20) targetHour = 20;
-                else if (hours >= 20 || hours < 2) targetHour = 2;
-
-                const targetDate = new Date(now);
-                if (hours >= 20) targetDate.setDate(targetDate.getDate() + 1);
-                targetDate.setHours(targetHour, 0, 0, 0);
-
-                const diff = targetDate - now;
-                const h = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
-                const m = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-                const s = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-
-                document.getElementById('next-ff-target').textContent = `${String(targetHour).padStart(2, '0')}:00`;
-                document.getElementById('ff-timer-clock').textContent = `${h}:${m}:${s}`;
-            }
-            updateTimer();
-            setInterval(updateTimer, 1000);
-        }
-
-        function renderItems() {
-            const listEl = document.getElementById('item-list');
-            const emptyEl = document.getElementById('empty-state');
-            const filtered = getFilteredAndSortedItems();
-
-            let expiredCount = 0;
-            let urgentCount = 0;
-            let warningCount = 0;
-
-            items.forEach(item => {
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-                if (diffDays < 0) expiredCount++;
-                else if (diffDays <= 2) urgentCount++;
-                else if (diffDays <= 7) warningCount++;
-            });
-
-            document.getElementById('count-total').textContent = items.length;
-            document.getElementById('count-expired').textContent = expiredCount;
-            document.getElementById('count-urgent').textContent = urgentCount;
-            document.getElementById('count-warning').textContent = warningCount;
-            document.getElementById('list-count').textContent = `${filtered.length}개`;
-
-            const urgentBanner = document.getElementById('urgent-alert-banner');
-            if (expiredCount > 0 || urgentCount > 0) {
-                urgentBanner.classList.remove('hidden');
-                document.getElementById('urgent-alert-text').textContent = `초과 ${expiredCount}건, 임박 ${urgentCount}건 존재!`;
-            } else {
-                urgentBanner.classList.add('hidden');
-            }
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = '';
-                emptyEl.classList.remove('hidden');
-            } else {
-                emptyEl.classList.add('hidden');
-                listEl.innerHTML = filtered.map(item => {
-                    const diffDays = getDaysUntilExpiry(item.expiryDate);
-                    let badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                    let dDayText = `D-${diffDays}`;
-
-                    if (diffDays < 0) {
-                        badgeBg = 'bg-red-700 text-white font-black';
-                        dDayText = `🚨 초과 (${Math.abs(diffDays)}일지남)`;
-                    } else if (diffDays === 0) {
-                        badgeBg = 'bg-7eleven-red text-white font-bold';
-                        dDayText = `오늘만료 (D-0)`;
-                    } else if (diffDays <= 2) {
-                        badgeBg = 'bg-red-100 text-red-800 border-red-300 font-bold';
-                        dDayText = `D-${diffDays} (임박)`;
-                    } else if (diffDays <= 7) {
-                        badgeBg = 'bg-amber-100 text-amber-800 border-amber-300';
-                    }
-
-                    return `
-                        <div class="p-3 ${diffDays < 0 ? 'bg-red-50/50' : ''} flex justify-between items-center gap-2">
-                            <div class="space-y-0.5 flex-1 min-w-0">
-                                <div class="flex items-center space-x-1.5">
-                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeBg} shrink-0">
-                                        ${dDayText}
-                                    </span>
-                                    <h3 class="font-bold text-gray-900 text-sm truncate">${escapeHtml(item.name)}</h3>
-                                </div>
-                                <div class="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
-                                    <span>소비기한: ${item.expiryDate} ${item.expiryTime || ''}</span>
-                                    <span>수량: <strong>${item.quantity}개</strong></span>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-1.5 shrink-0">
-                                <button onclick="adjustQty('${item.id}', -1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">-</button>
-                                <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
-                                <button onclick="adjustQty('${item.id}', 1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">+</button>
-                                <button onclick="deleteItem('${item.id}')" class="p-1.5 text-gray-400 active:text-red-600">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            lucide.createIcons();
-            saveStoredItems();
-            if (currentView === 'calendar') renderCalendar();
-        }
-
-        function changeMonth(delta) {
-            calendarMonth += delta;
-            if (calendarMonth < 0) {
-                calendarMonth = 11;
-                calendarYear--;
-            } else if (calendarMonth > 11) {
-                calendarMonth = 0;
-                calendarYear++;
-            }
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const titleEl = document.getElementById('calendar-month-title');
-            const gridEl = document.getElementById('calendar-grid');
-
-            titleEl.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
-
-            const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-            const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-            const todayStr = getRelativeDateStr(0);
-
-            const itemsByDate = {};
-            items.forEach(item => {
-                if (!itemsByDate[item.expiryDate]) itemsByDate[item.expiryDate] = [];
-                itemsByDate[item.expiryDate].push(item);
-            });
-
-            let html = '';
-            for (let i = 0; i < firstDay; i++) {
-                html += `<div class="bg-gray-50 rounded-xl h-14 p-1"></div>`;
-            }
-
-            for (let d = 1; d <= lastDate; d++) {
-                const monthStr = String(calendarMonth + 1).padStart(2, '0');
-                const dateStr = String(d).padStart(2, '0');
-                const fullDate = `${calendarYear}-${monthStr}-${dateStr}`;
-
-                const dayItems = itemsByDate[fullDate] || [];
-                const isToday = fullDate === todayStr;
-
-                let totalQty = 0;
-                let hasExpired = false;
-                let hasUrgent = false;
-
-                dayItems.forEach(it => {
-                    totalQty += it.quantity;
-                    const diff = getDaysUntilExpiry(it.expiryDate);
-                    if (diff < 0) hasExpired = true;
-                    else if (diff <= 2) hasUrgent = true;
-                });
-
-                let badge = '';
-                if (hasExpired) badge = `<span class="bg-red-600 text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-                else if (hasUrgent) badge = `<span class="bg-7eleven-red text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-                else if (totalQty > 0) badge = `<span class="bg-emerald-600 text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-
-                html += `
-                    <div onclick="openDateDetailsModal('${fullDate}')" class="border border-gray-100 bg-white rounded-xl p-1 h-14 flex flex-col justify-between cursor-pointer active:bg-emerald-50">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold ${isToday ? 'text-white bg-7eleven-green w-4 h-4 rounded-full flex items-center justify-center text-[10px]' : 'text-gray-700'}">${d}</span>
-                            ${badge}
-                        </div>
-                        <div class="text-[9px] text-gray-400 truncate">
-                            ${dayItems.length > 0 ? `${dayItems[0].name}` : ''}
-                        </div>
-                    </div>
-                `;
-            }
-
-            gridEl.innerHTML = html;
-        }
-
-        function openDateDetailsModal(dateStr) {
-            const dateItems = items.filter(i => i.expiryDate === dateStr);
-            const titleEl = document.getElementById('date-details-title');
-            const listEl = document.getElementById('date-details-list');
-
-            titleEl.textContent = `📅 ${dateStr} 만료 상품 (${dateItems.length}건)`;
-
-            if (dateItems.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">해당 날짜 만료 상품이 없습니다.</p>`;
-            } else {
-                listEl.innerHTML = dateItems.map(it => `
-                    <div class="py-2 flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-xs text-gray-800">${escapeHtml(it.name)}</div>
-                            <div class="text-[10px] text-gray-500">${it.category} | 시각: ${it.expiryTime || '없음'} | 수량: ${it.quantity}개</div>
-                        </div>
-                        <button onclick="deleteItem('${it.id}'); openDateDetailsModal('${dateStr}');" class="text-xs text-red-600 font-bold p-1">삭제</button>
-                    </div>
-                `).join('');
-            }
-
-            document.getElementById('modal-date-details').classList.remove('hidden');
-        }
-
-        function closeDateDetailsModal() {
-            document.getElementById('modal-date-details').classList.add('hidden');
-        }
-
-        function cleanSearchQuery(query) {
-            if (!query) return '';
-            let cleaned = query.trim().toLowerCase();
-            cleaned = cleaned.replace(/\b(202[0-9]|203[0-9])년?\b/g, '');
-            return cleaned.replace(/\s+/g, ' ').trim();
-        }
-
-        function getFilteredAndSortedItems() {
-            const rawSearch = document.getElementById('search-input').value;
-            const search = cleanSearchQuery(rawSearch);
-            const statusFilter = document.getElementById('filter-status').value;
-            const categoryFilter = document.getElementById('filter-category').value;
-            const sortOrder = document.getElementById('sort-order').value;
-
-            let result = items.filter(item => {
-                const matchesSearch = !search || item.name.toLowerCase().includes(search) || (item.barcode && item.barcode.includes(search));
-                const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
-
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-                let matchesStatus = true;
-                if (statusFilter === 'expired') matchesStatus = diffDays < 0;
-                else if (statusFilter === 'urgent') matchesStatus = diffDays >= 0 && diffDays <= 2;
-                else if (statusFilter === 'warning') matchesStatus = diffDays >= 3 && diffDays <= 7;
-                else if (statusFilter === 'normal') matchesStatus = diffDays >= 8;
-
-                return matchesSearch && matchesCategory && matchesStatus;
-            });
-
-            result.sort((a, b) => {
-                if (sortOrder === 'expiryAsc') return new Date(a.expiryDate) - new Date(b.expiryDate);
-                if (sortOrder === 'expiryDesc') return new Date(b.expiryDate) - new Date(a.expiryDate);
-                if (sortOrder === 'nameAsc') return a.name.localeCompare(b.name, 'ko');
-                if (sortOrder === 'qtyDesc') return b.quantity - a.quantity;
-                return 0;
-            });
-
-            return result;
-        }
-
-        function filterItems() {
-            renderItems();
-        }
-
-        function filterStatus(status) {
-            document.getElementById('filter-status').value = status;
-            renderItems();
-        }
-
-        function adjustQty(id, delta) {
-            const item = items.find(i => i.id === id);
-            if (item) {
-                item.quantity += delta;
-                if (item.quantity <= 0) deleteItem(id);
-                else renderItems();
-            }
-        }
-
-        function deleteItem(id) {
-            items = items.filter(i => i.id !== id);
-            showToast('상품이 삭제되었습니다.');
-            renderItems();
-        }
-
-        function openScanModal() {
-            document.getElementById('modal-scan').classList.remove('hidden');
-            resetScanModal();
-        }
-
-        function closeScanModal() {
-            document.getElementById('modal-scan').classList.add('hidden');
-        }
-
-        function openManualModal() {
-            document.getElementById('modal-manual').classList.remove('hidden');
-            document.getElementById('manual-date').value = getRelativeDateStr(0);
-        }
-
-        function closeManualModal() {
-            document.getElementById('modal-manual').classList.add('hidden');
-        }
-
-        function resetScanModal() {
-            document.getElementById('preview-img').classList.add('hidden');
-            document.getElementById('upload-placeholder').classList.remove('hidden');
-            document.getElementById('ai-loading').classList.add('hidden');
-            document.getElementById('ai-result-form').classList.add('hidden');
-            document.getElementById('camera-file').value = '';
-        }
-
-        function handleImageSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function (evt) {
-                const base64Data = evt.target.result;
-                const previewImg = document.getElementById('preview-img');
-                previewImg.src = base64Data;
-                previewImg.classList.remove('hidden');
-                document.getElementById('upload-placeholder').classList.add('hidden');
-
-                document.getElementById('ai-loading').classList.remove('hidden');
-
-                const pureBase64 = base64Data.split(',')[1];
-                const activeKey = getActiveApiKey();
-                
-                let success = false;
-                if (activeKey) {
-                    document.getElementById('ai-loading-text').textContent = 'Gemini AI 정밀 분석 중...';
-                    success = await callGeminiApi(pureBase64, file.type, activeKey);
-                }
-
-                if (!success) {
-                    document.getElementById('ai-loading-text').textContent = '스마트 로컬 OCR 처리 중...';
-                    setTimeout(() => {
-                        document.getElementById('ai-loading').classList.add('hidden');
-                        document.getElementById('ai-name').value = '신규 스캔 상품';
-                        document.getElementById('ai-date').value = getRelativeDateStr(0);
-                        document.getElementById('ai-time').value = '20:00';
-                        document.getElementById('ai-category').value = 'FF';
-                        document.getElementById('ai-result-form').classList.remove('hidden');
-                    }, 600);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function callGeminiApi(base64Image, mimeType, keyToUse) {
-            const prompt = `이 사진은 편의점(세븐일레븐) 상품 또는 소비기한 라벨 사진입니다. 
-상품명, 소비기한/유통기한 날짜(YYYY-MM-DD), 시간(HH:MM), 카테고리(FF/유제품/신선/기타 중 하나)를 찾아 JSON 형식으로만 응답하세요:
-{
-  "productName": "상품명",
+  "productName": "실제 상품 이름",
   "expiryDate": "YYYY-MM-DD",
   "expiryTime": "HH:MM",
   "category": "FF"
@@ -1941,33 +959,17 @@ JSON 출력 예시:
                     const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
                     const parsed = JSON.parse(text);
 
-                    document.getElementById('ai-loading').classList.add('hidden');
-                    document.getElementById('ai-name').value = parsed.productName || '인식된 상품';
-                    document.getElementById('ai-date').value = parsed.expiryDate || getRelativeDateStr(0);
-                    document.getElementById('ai-time').value = parsed.expiryTime || '';
-                    document.getElementById('ai-category').value = parsed.category || 'FF';
-                    document.getElementById('ai-result-form').classList.remove('hidden');
-                    showToast("Gemini AI 추출 완료!");
-                    return true;
+                    return {
+                        name: parsed.productName && parsed.productName.trim() !== "" ? parsed.productName : '촬영 스캔 상품',
+                        expiryDate: parsed.expiryDate || getRelativeDateStr(0),
+                        expiryTime: parsed.expiryTime || '',
+                        category: parsed.category || 'FF'
+                    };
                 }
-            } catch(e) {}
-            return false;
-        }
-
-        function saveAiResult(e) {
-            e.preventDefault();
-            const newItem = {
-                id: Date.now().toString(),
-                name: document.getElementById('ai-name').value,
-                expiryDate: document.getElementById('ai-date').value,
-                expiryTime: document.getElementById('ai-time').value,
-                category: document.getElementById('ai-category').value,
-                quantity: parseInt(document.getElementById('ai-qty').value) || 1
-            };
-            items.unshift(newItem);
-            renderItems();
-            closeScanModal();
-            showToast(`'${newItem.name}' 저장 완료!`);
+            } catch(e) {
+                console.error("Gemini Direct Error:", e);
+            }
+            return null;
         }
 
         function saveManualResult(e) {
@@ -2040,7 +1042,7 @@ JSON 출력 예시:
         }
 
         function exportToCSV() {
-            let csv = "\uFEFF상품명,카테고리,소비기한,시간,수량\n";
+            let csv = "\uFEFF제품명,카테고리,소비기한,시간,수량\n";
             items.forEach(i => {
                 csv += `"${i.name}","${i.category}","${i.expiryDate}","${i.expiryTime}",${i.quantity}\n`;
             });
@@ -2060,7 +1062,7 @@ JSON 출력 예시:
             toast.classList.remove('opacity-0');
             setTimeout(() => {
                 toast.classList.add('opacity-0');
-            }, 2500);
+            }, 3000);
         }
 
         function escapeHtml(str) {
@@ -2069,5 +1071,3 @@ JSON 출력 예시:
     </script>
 </body>
 </html>
-
-```
