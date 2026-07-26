@@ -1,10 +1,32 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>세븐일레븐 소비기한 스마트 관리 시스템</title>
+
+    <!-- PWA & Web App Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="7-ELEVEN 재고">
+    <meta name="theme-color" content="#008060">
+
+    <!-- Inline SVG Favicon & Apple Touch Icon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>">
+
+    <!-- Dynamic Web App Manifest via Data URI for Easy GitHub Pages Deploy -->
+    <link rel="manifest" href="data:application/manifest+json;utf8,{
+        %22name%22:%20%22세븐일레븐%20소비기한%20스마트%20관리%22,
+        %22short_name%22:%20%227-ELEVEN%22,
+        %22start_url%22:%20%22.%22,
+        %22display%22:%20%22standalone%22,
+        %22background_color%22:%20%22%23f3f4f6%22,
+        %22theme_color%22:%20%22%23008060%22,
+        %22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]
+    }">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -38,9 +60,12 @@
                     <span class="text-7eleven-red">7-</span>
                     <span class="text-7eleven-green">ELEVEN</span>
                 </div>
-                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">다중 AI 스캔 지원</span>
+                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PWA &amp; AI</span>
             </div>
-            <div class="flex items-center space-x-1.5">
+            <div class="flex items-center space-x-1">
+                <button onclick="openBackupModal()" class="bg-blue-50 active:bg-blue-100 text-blue-700 font-bold p-2 rounded-xl border border-blue-200 flex items-center justify-center" title="백업/복원">
+                    <i data-lucide="database" class="w-4 h-4"></i>
+                </button>
                 <button onclick="openApiKeyModal()" class="bg-emerald-50 active:bg-emerald-100 text-7eleven-green font-bold p-2 rounded-xl border border-emerald-300 flex items-center justify-center" title="API 설정">
                     <i data-lucide="key" class="w-4 h-4"></i>
                 </button>
@@ -209,8 +234,10 @@
     <button onclick="triggerQuickScan()" class="fixed right-4 bottom-20 z-30 bg-7eleven-red text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
         <i data-lucide="camera" class="w-6 h-6"></i>
     </button>
-    <!-- 다중 사진 선택(multiple) 옵션 추가 -->
+    <!-- 다중 사진 선택(multiple) 옵션 -->
     <input type="file" id="direct-camera-file" accept="image/*" multiple capture="environment" class="hidden" onchange="handleMultipleImagesSelect(event)">
+    <!-- 백업 파일 로드용 숨김 input -->
+    <input type="file" id="backup-file-input" accept=".json" class="hidden" onchange="importBackupFile(event)">
 
     <!-- Bottom Mobile Navigation Bar -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
@@ -259,7 +286,36 @@
         </div>
     </div>
 
-    <!-- Modal 1: Processing Overlay Modal (다중 진행 상태 표시 가능) -->
+    <!-- Modal: Data Backup & Restore Modal -->
+    <div id="modal-backup" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
+            <button onclick="closeBackupModal()" class="absolute right-4 top-4 text-gray-400">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="flex items-center space-x-2 text-blue-700 mb-1">
+                <i data-lucide="database" class="w-5 h-5"></i>
+                <h3 class="text-base font-bold text-gray-800">데이터 백업 및 복원</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">현재 재고 데이터를 안전하게 파일로 저장하거나, 파일에서 복원합니다.</p>
+
+            <div class="space-y-3">
+                <button onclick="exportBackupFile()" class="w-full py-3 bg-blue-600 active:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center">
+                    <i data-lucide="download" class="w-4 h-4 mr-1.5"></i> 백업 파일 다운로드 (.json)
+                </button>
+                <div class="border-t pt-3 flex gap-2">
+                    <button onclick="triggerImportBackup(false)" class="w-1/2 py-3 bg-gray-800 active:bg-black text-white font-bold text-xs rounded-xl flex items-center justify-center">
+                        <i data-lucide="upload" class="w-4 h-4 mr-1.5"></i> 덮어쓰기 복원
+                    </button>
+                    <button onclick="triggerImportBackup(true)" class="w-1/2 py-3 bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl flex items-center justify-center">
+                        <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> 기존재고에 병합
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 1: Processing Overlay Modal -->
     <div id="modal-processing" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl space-y-3">
             <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-7eleven-green border-t-transparent"></div>
@@ -432,6 +488,7 @@
         let currentView = 'list';
         let calendarYear = new Date().getFullYear();
         let calendarMonth = new Date().getMonth();
+        let isMergeImport = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
@@ -439,7 +496,22 @@
             renderItems();
             renderCalendar();
             startFFTimer();
+            registerInlineServiceWorker();
         });
+
+        // PWA Inline Service Worker Registration for GitHub Pages
+        function registerInlineServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+                    self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                    self.addEventListener('fetch', e => {});
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+        }
 
         function triggerQuickScan() {
             document.getElementById('direct-camera-file').click();
@@ -513,6 +585,79 @@
             updateApiStatusUI();
             closeApiKeyModal();
             showToast("API 키가 초기화되었습니다.");
+        }
+
+        // --- 백업 & 복원 기능 ---
+        function openBackupModal() {
+            document.getElementById('modal-backup').classList.remove('hidden');
+        }
+
+        function closeBackupModal() {
+            document.getElementById('modal-backup').classList.add('hidden');
+        }
+
+        function exportBackupFile() {
+            const backupData = {
+                version: '1.0',
+                exportedAt: new Date().toISOString(),
+                itemCount: items.length,
+                items: items
+            };
+
+            const jsonStr = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `7eleven_backup_${getRelativeDateStr(0)}.json`;
+            a.click();
+            showToast("📦 백업 파일 다운로드 완료!");
+            closeBackupModal();
+        }
+
+        function triggerImportBackup(merge) {
+            isMergeImport = merge;
+            document.getElementById('backup-file-input').click();
+        }
+
+        function importBackupFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    const importedItems = Array.isArray(parsed) ? parsed : (parsed.items || []);
+
+                    if (!Array.isArray(importedItems)) {
+                        showToast("❌ 올바르지 않은 백업 파일 형식입니다.");
+                        return;
+                    }
+
+                    if (isMergeImport) {
+                        const existingIds = new Set(items.map(i => i.id));
+                        let added = 0;
+                        importedItems.forEach(i => {
+                            if (!existingIds.has(i.id)) {
+                                items.push(i);
+                                added++;
+                            }
+                        });
+                        showToast(`📥 기존 재고에 ${added}건이 추가되었습니다.`);
+                    } else {
+                        items = importedItems;
+                        showToast(`🔄 총 ${items.length}건으로 재고가 복원되었습니다.`);
+                    }
+
+                    renderItems();
+                    closeBackupModal();
+                } catch(err) {
+                    showToast("❌ 백업 파일을 읽는 중 오류가 발생했습니다.");
+                }
+                document.getElementById('backup-file-input').value = '';
+            };
+            reader.readAsText(file);
         }
 
         function loadStoredItems() {
@@ -1203,5 +1348,3 @@
     </script>
 </body>
 </html>
-
-
