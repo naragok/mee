@@ -2,1349 +2,223 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>세븐일레븐 소비기한 스마트 관리 시스템</title>
-
-    <!-- PWA & Web App Meta Tags -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="7-ELEVEN 재고">
-    <meta name="theme-color" content="#008060">
-
-    <!-- Inline SVG Favicon & Apple Touch Icon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>">
-
-    <!-- Dynamic Web App Manifest via Data URI for Easy GitHub Pages Deploy -->
-    <link rel="manifest" href="data:application/manifest+json;utf8,{
-        %22name%22:%20%22세븐일레븐%20소비기한%20스마트%20관리%22,
-        %22short_name%22:%20%227-ELEVEN%22,
-        %22start_url%22:%20%22.%22,
-        %22display%22:%20%22standalone%22,
-        %22background_color%22:%20%22%23f3f4f6%22,
-        %22theme_color%22:%20%22%23008060%22,
-        %22icons%22:[{%22src%22:%22data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23008060'/><path d='M20 25 h60 v10 h-35 l-10 40 h15' stroke='%23E31837' stroke-width='12' fill='none' stroke-linecap='round' stroke-linejoin='round'/><text x='50' y='82' font-size='22' font-family='sans-serif' font-weight='900' fill='white' text-anchor='middle'>7-ELEVEN</text></svg>%22,%22sizes%22:%22192x192%22,%22type%22:%22image/svg+xml%22}]
-    }">
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7-Eleven 소비기한 관리 달력 - 2026년 07월</title>
     <style>
-        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        .bg-7eleven-green { background-color: #008060; }
-        .bg-7eleven-red { background-color: #E31837; }
-        .bg-7eleven-orange { background-color: #F7931E; }
-        .text-7eleven-green { color: #008060; }
-        .text-7eleven-red { color: #E31837; }
-        .border-7eleven-green { border-color: #008060; }
-
-        input, select, button {
-            font-size: 16px !important;
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding:24px; background:#f4f6f8; color:#333; margin:0; }
+        .container { max-width:1100px; margin:0 auto; background:#fff; padding:28px; border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+        .header { display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #008060; padding-bottom:14px; margin-bottom:20px; }
+        .logo { background:linear-gradient(135deg, #008060, #ED1C24); color:#fff; font-weight:900; padding:6px 14px; border-radius:8px; font-size:18px; display:inline-block; letter-spacing:-0.5px; }
+        h1 { margin:0; font-size:22px; color:#111; font-weight:800; }
+        .print-btn { background:#008060; color:#fff; border:none; padding:9px 18px; border-radius:10px; font-weight:bold; font-size:13px; cursor:pointer; transition:0.2s; }
+        .print-btn:hover { background:#00664d; }
+        table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        th { background:#f3f4f6; border:1px solid #e5e7eb; padding:10px; font-size:13px; font-weight:bold; color:#374151; }
+        th.sun { color:#dc2626; }
+        th.sat { color:#2563eb; }
+        @media print {
+            body { padding:0; background:#fff; }
+            .container { box-shadow:none; padding:0; width:100%; max-width:none; }
+            .print-btn { display:none; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-24 text-gray-800">
-
-    <!-- Mobile Header -->
-    <header class="bg-white shadow-sm border-b-4 border-7eleven-green sticky top-0 z-40">
-        <div class="max-w-lg mx-auto px-4 py-2.5 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <div class="flex font-black text-2xl tracking-tighter">
-                    <span class="text-7eleven-red">7-</span>
-                    <span class="text-7eleven-green">ELEVEN</span>
-                </div>
-                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">PWA &amp; AI</span>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="logo">7-ELEVEN</span>
+                <span style="font-size:14px; font-weight:bold; color:#4b5563; margin-left:8px;">소비기한 및 폐기 관리 달력</span>
             </div>
-            <div class="flex items-center space-x-1">
-                <button onclick="openBackupModal()" class="bg-blue-50 active:bg-blue-100 text-blue-700 font-bold p-2 rounded-xl border border-blue-200 flex items-center justify-center" title="백업/복원">
-                    <i data-lucide="database" class="w-4 h-4"></i>
-                </button>
-                <button onclick="openApiKeyModal()" class="bg-emerald-50 active:bg-emerald-100 text-7eleven-green font-bold p-2 rounded-xl border border-emerald-300 flex items-center justify-center" title="API 설정">
-                    <i data-lucide="key" class="w-4 h-4"></i>
-                </button>
-                <button onclick="exportToCSV()" class="bg-gray-100 active:bg-gray-200 text-gray-700 font-bold p-2 rounded-xl flex items-center justify-center" title="CSV 다운로드">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-lg mx-auto px-3.5 mt-3">
-
-        <!-- Gemini API Key Status Bar -->
-        <div id="api-key-status-bar" class="mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm">
-            <div class="flex items-center space-x-2 truncate">
-                <i data-lucide="bot" class="w-4 h-4 text-emerald-600 shrink-0"></i>
-                <span id="api-status-text" class="truncate font-medium">Gemini 2.5 Flash 정밀 라벨 AI 가동 준비 완료</span>
-            </div>
-            <button onclick="openApiKeyModal()" class="underline font-bold text-7eleven-green shrink-0 ml-2">설정</button>
+            <button onclick="window.print()" class="print-btn">🖨️ 인쇄 / PDF 저장</button>
         </div>
 
-        <!-- Real-time FF Timer Banner -->
-        <div class="bg-gray-900 text-white rounded-2xl p-3 shadow-md mb-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <span class="relative flex h-2.5 w-2.5">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-                <span class="text-xs font-semibold text-gray-300">다음 FF 폐기:</span>
-                <span id="next-ff-target" class="text-xs text-amber-400 font-bold">20:00</span>
-            </div>
-            <span id="ff-timer-clock" class="text-base font-black tracking-wider text-emerald-400 font-mono">00:00:00</span>
-        </div>
-
-        <!-- Urgent Alert Banner -->
-        <div id="urgent-alert-banner" class="hidden mb-3 bg-red-500 text-white p-3 rounded-2xl shadow-md flex justify-between items-center animate-pulse">
-            <div class="flex items-center space-x-1.5 truncate">
-                <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
-                <span id="urgent-alert-text" class="text-xs font-bold truncate">기한 초과/임박 상품 조치 필요!</span>
-            </div>
-            <button onclick="filterStatus('urgent'); switchView('list');" class="bg-white text-red-600 text-xs font-bold px-2 py-1 rounded-lg shrink-0 active:bg-gray-100">
-                확인
-            </button>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-4 gap-1.5 mb-3">
-            <div onclick="filterStatus('all'); switchView('list');" class="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-200 text-center active:scale-95 transition-transform cursor-pointer">
-                <div class="text-[10px] text-gray-500 font-medium">전체</div>
-                <div id="count-total" class="text-lg font-black text-gray-800 mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('expired'); switchView('list');" class="bg-red-100 p-2.5 rounded-2xl shadow-sm border border-red-300 text-center active:scale-95 transition-transform cursor-pointer">
-                <div class="text-[10px] text-red-700 font-bold flex items-center justify-center">
-                    <i data-lucide="x-circle" class="w-3 h-3 mr-0.5"></i> 초과
-                </div>
-                <div id="count-expired" class="text-lg font-black text-red-700 mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('urgent'); switchView('list');" class="bg-red-50 p-2.5 rounded-2xl shadow-sm border border-red-200 text-center active:scale-95 transition-transform cursor-pointer">
-                <div class="text-[10px] text-red-600 font-bold flex items-center justify-center">
-                    <i data-lucide="alert-circle" class="w-3 h-3 mr-0.5"></i> 임박
-                </div>
-                <div id="count-urgent" class="text-lg font-black text-7eleven-red mt-0.5">0</div>
-            </div>
-            <div onclick="filterStatus('warning'); switchView('list');" class="bg-amber-50 p-2.5 rounded-2xl shadow-sm border border-amber-200 text-center active:scale-95 transition-transform cursor-pointer">
-                <div class="text-[10px] text-amber-700 font-medium">주의</div>
-                <div id="count-warning" class="text-lg font-black text-amber-600 mt-0.5">0</div>
-            </div>
-        </div>
-
-        <!-- View Section 1: List View -->
-        <div id="section-list-view" class="space-y-3">
-            <!-- Mobile Search & Filter -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 space-y-2">
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="search-input" onkeyup="filterItems()" placeholder="상품명 또는 바코드 검색..." class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-7eleven-green">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-xs">
-                    <select id="filter-status" onchange="filterItems()" class="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 focus:outline-none">
-                        <option value="all">모든 상태</option>
-                        <option value="expired">🚨 기한 초과</option>
-                        <option value="urgent">🔴 당일/임박(2일)</option>
-                        <option value="warning">🟡 주의(3~7일)</option>
-                        <option value="normal">🟢 여유(8일이상)</option>
-                    </select>
-                    <select id="filter-category" onchange="filterItems()" class="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 focus:outline-none">
-                        <option value="all">전체 카테고리</option>
-                        <option value="FF">FF/도시락/삼김</option>
-                        <option value="유제품">유제품/음료</option>
-                        <option value="신선">신선/냉장</option>
-                        <option value="기타">기타 일반</option>
-                    </select>
-                </div>
-
-                <div class="flex justify-between items-center pt-1 text-xs text-gray-500">
-                    <div class="flex items-center space-x-1">
-                        <span>정렬:</span>
-                        <select id="sort-order" onchange="filterItems()" class="bg-transparent border-none font-bold text-gray-700 focus:outline-none">
-                            <option value="expiryAsc">임박/초과순</option>
-                            <option value="expiryDesc">소비기한 긴순</option>
-                            <option value="nameAsc">가나다순</option>
-                            <option value="qtyDesc">수량많은순</option>
-                        </select>
-                    </div>
-                    <button onclick="openManualModal()" class="text-7eleven-green font-bold flex items-center">
-                        <i data-lucide="plus" class="w-3.5 h-3.5 mr-0.5"></i> 수동 입력
-                    </button>
-                </div>
-            </div>
-
-            <!-- Inventory List Container -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-12">
-                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="font-bold text-gray-800 flex items-center text-sm">
-                        <i data-lucide="package" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
-                        재고 목록
-                    </h2>
-                    <span id="list-count" class="text-xs text-gray-400">0개</span>
-                </div>
-
-                <div class="divide-y divide-gray-100" id="item-list">
-                    <!-- Data populated dynamically -->
-                </div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="p-10 text-center">
-                    <i data-lucide="inbox" class="w-10 h-10 mx-auto text-gray-300 mb-2"></i>
-                    <p class="text-gray-500 text-sm font-medium">등록된 상품이 없습니다.</p>
-                    <p class="text-xs text-gray-400 mt-1">하단 [사진스캔] 버튼을 눌러 여러 장의 라벨을 스캔해보세요.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- View Section 2: Mobile Calendar View -->
-        <div id="section-calendar-view" class="hidden bg-white p-3.5 rounded-2xl border border-gray-200 shadow-sm mb-12">
-            <div class="flex justify-between items-center mb-3">
-                <button onclick="changeMonth(-1)" class="p-1.5 border border-gray-200 rounded-xl active:bg-gray-100">
-                    <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
-                </button>
-                <h2 id="calendar-month-title" class="text-base font-bold text-gray-800">2026년 7월</h2>
-                <button onclick="changeMonth(1)" class="p-1.5 border border-gray-200 rounded-xl active:bg-gray-100">
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i>
-                </button>
-            </div>
-
-            <div class="grid grid-cols-7 gap-1 text-center font-bold text-[11px] text-gray-500 mb-1.5">
-                <div class="text-red-500">일</div>
-                <div>월</div>
-                <div>화</div>
-                <div>수</div>
-                <div>목</div>
-                <div>금</div>
-                <div class="text-blue-500">토</div>
-            </div>
-
-            <div id="calendar-grid" class="grid grid-cols-7 gap-1">
-                <!-- Dynamically generated calendar days -->
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Floating Action Button (FAB) for Quick Camera Scan -->
-    <button onclick="triggerQuickScan()" class="fixed right-4 bottom-20 z-30 bg-7eleven-red text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform">
-        <i data-lucide="camera" class="w-6 h-6"></i>
-    </button>
-    <!-- 다중 사진 선택(multiple) 옵션 -->
-    <input type="file" id="direct-camera-file" accept="image/*" multiple capture="environment" class="hidden" onchange="handleMultipleImagesSelect(event)">
-    <!-- 백업 파일 로드용 숨김 input -->
-    <input type="file" id="backup-file-input" accept=".json" class="hidden" onchange="importBackupFile(event)">
-
-    <!-- Bottom Mobile Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 shadow-lg">
-        <div class="max-w-lg mx-auto grid grid-cols-4 text-center py-2">
-            <button id="nav-btn-list" onclick="switchView('list')" class="flex flex-col items-center justify-center text-7eleven-green font-bold">
-                <i data-lucide="list" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">목록보기</span>
-            </button>
-            <button id="nav-btn-calendar" onclick="switchView('calendar')" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">달력보기</span>
-            </button>
-            <button onclick="triggerQuickScan()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="camera" class="w-5 h-5 mb-0.5 text-7eleven-red"></i>
-                <span class="text-[10px]">사진스캔</span>
-            </button>
-            <button onclick="openReportModal()" class="flex flex-col items-center justify-center text-gray-400 font-medium">
-                <i data-lucide="file-text" class="w-5 h-5 mb-0.5"></i>
-                <span class="text-[10px]">인수인계</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Modal 0: API Key Modal -->
-    <div id="modal-apikey" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeApiKeyModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="flex items-center space-x-2 text-7eleven-green mb-1">
-                <i data-lucide="key" class="w-5 h-5"></i>
-                <h3 class="text-base font-bold text-gray-800">Gemini API 키 설정</h3>
-            </div>
-            <p class="text-xs text-gray-500 mb-3">개인 커스텀 API 키를 등록할 수 있습니다 (미입력 시 런타임 제공 AI 사용).</p>
-
-            <form onsubmit="saveApiKey(event)" class="space-y-3">
-                <div>
-                    <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:border-7eleven-green focus:outline-none font-mono">
-                </div>
-                <div class="flex gap-2 pt-1">
-                    <button type="button" onclick="clearApiKey()" class="w-1/3 py-2.5 bg-gray-100 text-red-600 font-bold text-xs rounded-xl">초기화</button>
-                    <button type="submit" class="w-2/3 py-2.5 bg-7eleven-green text-white font-bold text-xs rounded-xl shadow-md">저장하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Data Backup & Restore Modal -->
-    <div id="modal-backup" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeBackupModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="flex items-center space-x-2 text-blue-700 mb-1">
-                <i data-lucide="database" class="w-5 h-5"></i>
-                <h3 class="text-base font-bold text-gray-800">데이터 백업 및 복원</h3>
-            </div>
-            <p class="text-xs text-gray-500 mb-4">현재 재고 데이터를 안전하게 파일로 저장하거나, 파일에서 복원합니다.</p>
-
-            <div class="space-y-3">
-                <button onclick="exportBackupFile()" class="w-full py-3 bg-blue-600 active:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-center">
-                    <i data-lucide="download" class="w-4 h-4 mr-1.5"></i> 백업 파일 다운로드 (.json)
-                </button>
-                <div class="border-t pt-3 flex gap-2">
-                    <button onclick="triggerImportBackup(false)" class="w-1/2 py-3 bg-gray-800 active:bg-black text-white font-bold text-xs rounded-xl flex items-center justify-center">
-                        <i data-lucide="upload" class="w-4 h-4 mr-1.5"></i> 덮어쓰기 복원
-                    </button>
-                    <button onclick="triggerImportBackup(true)" class="w-1/2 py-3 bg-emerald-700 active:bg-emerald-800 text-white font-bold text-xs rounded-xl flex items-center justify-center">
-                        <i data-lucide="plus-circle" class="w-4 h-4 mr-1.5"></i> 기존재고에 병합
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 1: Processing Overlay Modal -->
-    <div id="modal-processing" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center shadow-2xl space-y-3">
-            <div class="inline-block animate-spin rounded-full h-10 w-10 border-4 border-7eleven-green border-t-transparent"></div>
-            <p class="text-sm font-bold text-gray-800" id="processing-text">Gemini AI 다중 라벨 분석 중...</p>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-200 rounded-full h-2 mt-2 overflow-hidden">
-                <div id="processing-progress-bar" class="bg-7eleven-green h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-            <p class="text-xs text-emerald-700 font-bold" id="processing-subtext">0 / 0 처리 중...</p>
-        </div>
-    </div>
-
-    <!-- Modal 2: Manual Registration Modal -->
-    <div id="modal-manual" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeManualModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 mb-3">수동 제품 직접 등록</h3>
-
-            <form class="space-y-2.5" onsubmit="saveManualResult(event)">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">제품명</label>
-                    <input type="text" id="manual-name" required placeholder="예: 시원한 오뎅한그릇" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="manual-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
-                        <input type="time" id="manual-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="manual-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="manual-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-2">
-                    <button type="submit" class="w-full py-3 bg-7eleven-green text-white font-bold text-sm rounded-xl shadow-md">등록하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 2-2: Item Edit Modal -->
-    <div id="modal-edit" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeEditModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
-                <i data-lucide="pencil" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
-                상품 정보 수정
-            </h3>
-
-            <form class="space-y-2.5" onsubmit="saveEditResult(event)">
-                <input type="hidden" id="edit-id">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">제품명</label>
-                    <input type="text" id="edit-name" required class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="edit-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
-                        <input type="time" id="edit-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="edit-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="edit-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeEditModal()" class="w-1/3 py-3 bg-gray-100 text-gray-700 font-bold text-sm rounded-xl">취소</button>
-                    <button type="submit" class="w-2/3 py-3 bg-7eleven-green text-white font-bold text-sm rounded-xl shadow-md">수정 완료</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 3: Report Modal -->
-    <div id="modal-report" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full p-5 shadow-2xl relative max-h-[85vh] flex flex-col">
-            <button onclick="closeReportModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 border-b pb-2 mb-3">근무 교대 인수인계 리포트</h3>
-
-            <div id="report-content" class="bg-gray-50 p-3 rounded-xl text-xs space-y-2 font-mono text-gray-800 border overflow-y-auto flex-1">
-                <!-- Generated dynamically -->
-            </div>
-
-            <div class="mt-3 flex gap-2">
-                <button onclick="copyReportText()" class="flex-1 py-3 bg-gray-900 text-white font-bold text-xs rounded-xl flex items-center justify-center active:bg-black">
-                    <i data-lucide="copy" class="w-4 h-4 mr-1"></i> 카톡 인수인계 복사
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 4: Calendar Date Details Modal -->
-    <div id="modal-date-details" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative max-h-[80vh] flex flex-col">
-            <button onclick="closeDateDetailsModal()" class="absolute right-4 top-4 text-gray-400">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 id="date-details-title" class="text-sm font-bold text-gray-800 border-b pb-2 mb-2">만료 예정 상품</h3>
-            
-            <div id="date-details-list" class="divide-y divide-gray-100 overflow-y-auto flex-1">
-                <!-- Populated dynamically -->
-            </div>
-
-            <div class="pt-3 border-t mt-2 text-right">
-                <button onclick="closeDateDetailsModal()" class="px-4 py-2 bg-gray-200 rounded-xl text-xs font-bold text-gray-700">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full text-xs font-medium shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center">
-        <i data-lucide="info" class="w-3.5 h-3.5 mr-1.5 text-emerald-400"></i>
-        <span id="toast-message">메시지</span>
-    </div>
-
-    <!-- Application Script -->
-    <script>
-        const STORAGE_KEY = '7eleven_inventory_direct';
-        const API_KEY_STORAGE = '7eleven_gemini_apikey';
-
-        // Runtime environment key
-        const apiKey = ""; 
-
-        let userApiKey = localStorage.getItem(API_KEY_STORAGE) || "";
-        let items = loadStoredItems();
-
-        let currentView = 'list';
-        let calendarYear = new Date().getFullYear();
-        let calendarMonth = new Date().getMonth();
-        let isMergeImport = false;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            updateApiStatusUI();
-            renderItems();
-            renderCalendar();
-            startFFTimer();
-            registerInlineServiceWorker();
-        });
-
-        // PWA Inline Service Worker Registration for GitHub Pages
-        function registerInlineServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                const swCode = `
-                    self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-                    self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                    self.addEventListener('fetch', e => {});
-                `;
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(() => {});
-            }
-        }
-
-        function triggerQuickScan() {
-            document.getElementById('direct-camera-file').click();
-        }
-
-        function switchView(viewName) {
-            currentView = viewName;
-            const secList = document.getElementById('section-list-view');
-            const secCal = document.getElementById('section-calendar-view');
-            const navList = document.getElementById('nav-btn-list');
-            const navCal = document.getElementById('nav-btn-calendar');
-
-            if (viewName === 'list') {
-                secList.classList.remove('hidden');
-                secCal.classList.add('hidden');
-                navList.className = "flex flex-col items-center justify-center text-7eleven-green font-bold";
-                navCal.className = "flex flex-col items-center justify-center text-gray-400 font-medium";
-            } else {
-                secList.classList.add('hidden');
-                secCal.classList.remove('hidden');
-                navCal.className = "flex flex-col items-center justify-center text-7eleven-green font-bold";
-                navList.className = "flex flex-col items-center justify-center text-gray-400 font-medium";
-                renderCalendar();
-            }
-        }
-
-        function getActiveApiKey() {
-            if (userApiKey && userApiKey.trim() !== '') return userApiKey.trim();
-            if (typeof apiKey !== 'undefined' && apiKey && apiKey.trim() !== '') return apiKey.trim();
-            return "";
-        }
-
-        function updateApiStatusUI() {
-            const textEl = document.getElementById('api-status-text');
-            const barEl = document.getElementById('api-key-status-bar');
-            const activeKey = getActiveApiKey();
-
-            if (activeKey) {
-                const isUser = userApiKey && userApiKey.trim() !== '';
-                textEl.innerHTML = `<strong class="text-emerald-700">Gemini 2.5 Flash 가동 중</strong> (${isUser ? '사용자 키' : '시스템 자동 연결'})`;
-                barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm";
-            } else {
-                textEl.textContent = `Gemini AI 미설정 (자동 스캔 가동)`;
-                barEl.className = "mb-3 p-2.5 rounded-xl text-xs flex justify-between items-center bg-gray-200 text-gray-700 border border-gray-300 shadow-sm";
-            }
-        }
-
-        function openApiKeyModal() {
-            document.getElementById('input-api-key').value = userApiKey;
-            document.getElementById('modal-apikey').classList.remove('hidden');
-        }
-
-        function closeApiKeyModal() {
-            document.getElementById('modal-apikey').classList.add('hidden');
-        }
-
-        function saveApiKey(e) {
-            e.preventDefault();
-            const val = document.getElementById('input-api-key').value.trim();
-            userApiKey = val;
-            localStorage.setItem(API_KEY_STORAGE, userApiKey);
-            updateApiStatusUI();
-            closeApiKeyModal();
-            showToast("API 키가 저장되었습니다!");
-        }
-
-        function clearApiKey() {
-            userApiKey = "";
-            localStorage.removeItem(API_KEY_STORAGE);
-            document.getElementById('input-api-key').value = "";
-            updateApiStatusUI();
-            closeApiKeyModal();
-            showToast("API 키가 초기화되었습니다.");
-        }
-
-        // --- 백업 & 복원 기능 ---
-        function openBackupModal() {
-            document.getElementById('modal-backup').classList.remove('hidden');
-        }
-
-        function closeBackupModal() {
-            document.getElementById('modal-backup').classList.add('hidden');
-        }
-
-        function exportBackupFile() {
-            const backupData = {
-                version: '1.0',
-                exportedAt: new Date().toISOString(),
-                itemCount: items.length,
-                items: items
-            };
-
-            const jsonStr = JSON.stringify(backupData, null, 2);
-            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `7eleven_backup_${getRelativeDateStr(0)}.json`;
-            a.click();
-            showToast("📦 백업 파일 다운로드 완료!");
-            closeBackupModal();
-        }
-
-        function triggerImportBackup(merge) {
-            isMergeImport = merge;
-            document.getElementById('backup-file-input').click();
-        }
-
-        function importBackupFile(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const parsed = JSON.parse(evt.target.result);
-                    const importedItems = Array.isArray(parsed) ? parsed : (parsed.items || []);
-
-                    if (!Array.isArray(importedItems)) {
-                        showToast("❌ 올바르지 않은 백업 파일 형식입니다.");
-                        return;
-                    }
-
-                    if (isMergeImport) {
-                        const existingIds = new Set(items.map(i => i.id));
-                        let added = 0;
-                        importedItems.forEach(i => {
-                            if (!existingIds.has(i.id)) {
-                                items.push(i);
-                                added++;
-                            }
-                        });
-                        showToast(`📥 기존 재고에 ${added}건이 추가되었습니다.`);
-                    } else {
-                        items = importedItems;
-                        showToast(`🔄 총 ${items.length}건으로 재고가 복원되었습니다.`);
-                    }
-
-                    renderItems();
-                    closeBackupModal();
-                } catch(err) {
-                    showToast("❌ 백업 파일을 읽는 중 오류가 발생했습니다.");
-                }
-                document.getElementById('backup-file-input').value = '';
-            };
-            reader.readAsText(file);
-        }
-
-        function loadStoredItems() {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                return stored ? JSON.parse(stored) : [];
-            } catch(e) {
-                return [];
-            }
-        }
-
-        function saveStoredItems() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-            } catch(e) {}
-        }
-
-        function getRelativeDateStr(addDays) {
-            const d = new Date();
-            d.setDate(d.getDate() + addDays);
-            return d.toISOString().split('T')[0];
-        }
-
-        // 공장코드, 라인번호, 작업자명 등 잡음을 배제한 정밀 날짜 정규화
-        function parseAndNormalizeDate(rawStr) {
-            if (!rawStr) return getRelativeDateStr(0);
-
-            let str = rawStr.toString().trim();
-
-            const korMatch = str.match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
-            if (korMatch) {
-                let y = korMatch[1];
-                if (y.length === 2) y = '20' + y;
-                const m = korMatch[2].padStart(2, '0');
-                const d = korMatch[3].padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-
-            const dotMatch = str.match(/(\d{2,4})[.\/-]\s*(\d{1,2})[.\/-]\s*(\d{1,2})/);
-            if (dotMatch) {
-                let y = dotMatch[1];
-                if (y.length === 2) y = '20' + y;
-                const m = dotMatch[2].padStart(2, '0');
-                const d = dotMatch[3].padStart(2, '0');
-                return `${y}-${m}-${d}`;
-            }
-
-            return getRelativeDateStr(0);
-        }
-
-        // 시각 정규화 (HH:MM)
-        function parseAndNormalizeTime(rawTime) {
-            if (!rawTime) return '';
-            let t = rawTime.toString().trim().replace(/\s+/g, '').replace(/시|부터|까지/g, '');
-            
-            const hourOnly = t.match(/^(\d{1,2})$/);
-            if (hourOnly) {
-                const h = hourOnly[1].padStart(2, '0');
-                return `${h}:00`;
-            }
-
-            const timeMatch = t.match(/(\d{1,2}):(\d{2})/);
-            if (timeMatch) {
-                const h = timeMatch[1].padStart(2, '0');
-                const m = timeMatch[2];
-                return `${h}:${m}`;
-            }
-
-            return '';
-        }
-
-        function getDaysUntilExpiry(dateStr) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const exp = new Date(dateStr);
-            if (isNaN(exp.getTime())) return 0;
-            
-            exp.setHours(0, 0, 0, 0);
-            return Math.ceil((exp - today) / (1000 * 60 * 60 * 24));
-        }
-
-        function startFFTimer() {
-            function updateTimer() {
-                const now = new Date();
-                const hours = now.getHours();
-                
-                let targetHour = 14;
-                if (hours >= 14 && hours < 20) targetHour = 20;
-                else if (hours >= 20 || hours < 2) targetHour = 2;
-
-                const targetDate = new Date(now);
-                if (hours >= 20) targetDate.setDate(targetDate.getDate() + 1);
-                targetDate.setHours(targetHour, 0, 0, 0);
-
-                const diff = targetDate - now;
-                const h = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
-                const m = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-                const s = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-
-                document.getElementById('next-ff-target').textContent = `${String(targetHour).padStart(2, '0')}:00`;
-                document.getElementById('ff-timer-clock').textContent = `${h}:${m}:${s}`;
-            }
-            updateTimer();
-            setInterval(updateTimer, 1000);
-        }
-
-        function renderItems() {
-            const listEl = document.getElementById('item-list');
-            const emptyEl = document.getElementById('empty-state');
-            const filtered = getFilteredAndSortedItems();
-
-            let expiredCount = 0;
-            let urgentCount = 0;
-            let warningCount = 0;
-
-            items.forEach(item => {
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-                if (diffDays < 0) expiredCount++;
-                else if (diffDays <= 2) urgentCount++;
-                else if (diffDays <= 7) warningCount++;
-            });
-
-            document.getElementById('count-total').textContent = items.length;
-            document.getElementById('count-expired').textContent = expiredCount;
-            document.getElementById('count-urgent').textContent = urgentCount;
-            document.getElementById('count-warning').textContent = warningCount;
-            document.getElementById('list-count').textContent = `${filtered.length}개`;
-
-            const urgentBanner = document.getElementById('urgent-alert-banner');
-            if (expiredCount > 0 || urgentCount > 0) {
-                urgentBanner.classList.remove('hidden');
-                document.getElementById('urgent-alert-text').textContent = `초과 ${expiredCount}건, 임박 ${urgentCount}건 조치 필요!`;
-            } else {
-                urgentBanner.classList.add('hidden');
-            }
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = '';
-                emptyEl.classList.remove('hidden');
-            } else {
-                emptyEl.classList.add('hidden');
-                listEl.innerHTML = filtered.map(item => {
-                    const diffDays = getDaysUntilExpiry(item.expiryDate);
-                    let badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                    let dDayText = `D-${diffDays}`;
-
-                    if (diffDays < 0) {
-                        badgeBg = 'bg-red-700 text-white font-black';
-                        dDayText = `🚨 초과 (${Math.abs(diffDays)}일지남)`;
-                    } else if (diffDays === 0) {
-                        badgeBg = 'bg-7eleven-red text-white font-bold';
-                        dDayText = `오늘만료 (D-0)`;
-                    } else if (diffDays <= 2) {
-                        badgeBg = 'bg-red-100 text-red-800 border-red-300 font-bold';
-                        dDayText = `D-${diffDays} (임박)`;
-                    } else if (diffDays <= 7) {
-                        badgeBg = 'bg-amber-100 text-amber-800 border-amber-300';
-                    }
-
-                    return `
-                        <div class="p-3 ${diffDays < 0 ? 'bg-red-50/60' : ''} flex justify-between items-center gap-2">
-                            <div class="space-y-0.5 flex-1 min-w-0">
-                                <div class="flex items-center space-x-1.5">
-                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeBg} shrink-0">
-                                        ${dDayText}
-                                    </span>
-                                    <h3 class="font-bold text-gray-900 text-sm truncate">${escapeHtml(item.name)}</h3>
-                                </div>
-                                <div class="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
-                                    <span>소비기한: <strong class="text-gray-800">${item.expiryDate}</strong> ${item.expiryTime ? `<span class="text-emerald-700 font-bold">${item.expiryTime}</span>` : ''}</span>
-                                    <span>카테고리: <strong>${item.category || 'FF'}</strong></span>
-                                    <span>수량: <strong>${item.quantity}개</strong></span>
-                                </div>
+        <h1 style="text-align:center; margin-bottom:20px;">🗓️ 2026년 07월 소비기한 관리 현황</h1>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="sun">일요일</th>
+                    <th>월요일</th>
+                    <th>화요일</th>
+                    <th>수요일</th>
+                    <th>목요일</th>
+                    <th>금요일</th>
+                    <th class="sat">토요일</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td style="background:#f9fafb; height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb;"></td><td style="background:#f9fafb; height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb;"></td><td style="background:#f9fafb; height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb;"></td>
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">1</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">2</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">3</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#2563eb;">4</div>
+                                
+                            </td>
+                        </tr><tr>
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#dc2626;">5</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">6</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">7</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">8</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">9</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">10</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#2563eb;">11</div>
+                                
+                            </td>
+                        </tr><tr>
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#dc2626;">12</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">13</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">14</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">15</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">16</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">17</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#2563eb;">18</div>
+                                
+                            </td>
+                        </tr><tr>
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#dc2626;">19</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">20</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">21</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">22</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">23</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">24</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#2563eb;">25</div>
+                                
+                            </td>
+                        </tr><tr>
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#dc2626;">26</div>
+                                <div style="background:#fee2e2; color:#991b1b; padding:3px 5px; margin-top:3px; border-radius:4px; font-size:11px; font-weight:600; line-height:1.3;">
+                                <strong>[신선]</strong> 시원한 오뎅한그릇 300g (1개 10:00)
                             </div>
-                            <div class="flex items-center space-x-1 shrink-0">
-                                <button onclick="adjustQty('${item.id}', -1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">-</button>
-                                <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
-                                <button onclick="adjustQty('${item.id}', 1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-sm flex items-center justify-center active:bg-gray-200">+</button>
-                                <button onclick="editItem('${item.id}')" class="p-1.5 text-gray-400 active:text-7eleven-green" title="수정">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                                </button>
-                                <button onclick="deleteItem('${item.id}')" class="p-1.5 text-gray-400 active:text-red-600" title="삭제">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">27</div>
+                                <div style="background:#ffedd5; color:#c2410c; padding:3px 5px; margin-top:3px; border-radius:4px; font-size:11px; font-weight:600; line-height:1.3;">
+                                <strong>[FF]</strong> 7-SELECT 전주비빔 삼각김밥 (3개 20:00)
                             </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            lucide.createIcons();
-            saveStoredItems();
-            if (currentView === 'calendar') renderCalendar();
-        }
-
-        function changeMonth(delta) {
-            calendarMonth += delta;
-            if (calendarMonth < 0) {
-                calendarMonth = 11;
-                calendarYear--;
-            } else if (calendarMonth > 11) {
-                calendarMonth = 0;
-                calendarYear++;
-            }
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const titleEl = document.getElementById('calendar-month-title');
-            const gridEl = document.getElementById('calendar-grid');
-
-            titleEl.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
-
-            const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-            const lastDate = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-            const todayStr = getRelativeDateStr(0);
-
-            const itemsByDate = {};
-            items.forEach(item => {
-                if (!itemsByDate[item.expiryDate]) itemsByDate[item.expiryDate] = [];
-                itemsByDate[item.expiryDate].push(item);
-            });
-
-            let html = '';
-            for (let i = 0; i < firstDay; i++) {
-                html += `<div class="bg-gray-50 rounded-xl h-14 p-1"></div>`;
-            }
-
-            for (let d = 1; d <= lastDate; d++) {
-                const monthStr = String(calendarMonth + 1).padStart(2, '0');
-                const dateStr = String(d).padStart(2, '0');
-                const fullDate = `${calendarYear}-${monthStr}-${dateStr}`;
-
-                const dayItems = itemsByDate[fullDate] || [];
-                const isToday = fullDate === todayStr;
-
-                let totalQty = 0;
-                let hasExpired = false;
-                let hasUrgent = false;
-
-                dayItems.forEach(it => {
-                    totalQty += it.quantity;
-                    const diff = getDaysUntilExpiry(it.expiryDate);
-                    if (diff < 0) hasExpired = true;
-                    else if (diff <= 2) hasUrgent = true;
-                });
-
-                let badge = '';
-                if (hasExpired) badge = `<span class="bg-red-600 text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-                else if (hasUrgent) badge = `<span class="bg-7eleven-red text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-                else if (totalQty > 0) badge = `<span class="bg-emerald-600 text-white text-[9px] px-1 rounded font-bold">${totalQty}</span>`;
-
-                html += `
-                    <div onclick="openDateDetailsModal('${fullDate}')" class="border border-gray-100 bg-white rounded-xl p-1 h-14 flex flex-col justify-between cursor-pointer active:bg-emerald-50">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold ${isToday ? 'text-white bg-7eleven-green w-4 h-4 rounded-full flex items-center justify-center text-[10px]' : 'text-gray-700'}">${d}</span>
-                            ${badge}
-                        </div>
-                        <div class="text-[9px] text-gray-400 truncate">
-                            ${dayItems.length > 0 ? `${dayItems[0].name}` : ''}
-                        </div>
-                    </div>
-                `;
-            }
-
-            gridEl.innerHTML = html;
-        }
-
-        function openDateDetailsModal(dateStr) {
-            const dateItems = items.filter(i => i.expiryDate === dateStr);
-            const titleEl = document.getElementById('date-details-title');
-            const listEl = document.getElementById('date-details-list');
-
-            titleEl.textContent = `📅 ${dateStr} 만료 상품 (${dateItems.length}건)`;
-
-            if (dateItems.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">해당 날짜 만료 상품이 없습니다.</p>`;
-            } else {
-                listEl.innerHTML = dateItems.map(it => `
-                    <div class="py-2 flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-xs text-gray-800">${escapeHtml(it.name)}</div>
-                            <div class="text-[10px] text-gray-500">${it.category} | 시간: ${it.expiryTime || '미기재'} | 수량: ${it.quantity}개</div>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <button onclick="closeDateDetailsModal(); editItem('${it.id}');" class="text-xs text-emerald-700 font-bold p-1">수정</button>
-                            <button onclick="deleteItem('${it.id}'); openDateDetailsModal('${dateStr}');" class="text-xs text-red-600 font-bold p-1">삭제</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            document.getElementById('modal-date-details').classList.remove('hidden');
-        }
-
-        function closeDateDetailsModal() {
-            document.getElementById('modal-date-details').classList.add('hidden');
-        }
-
-        function getFilteredAndSortedItems() {
-            const search = document.getElementById('search-input').value.trim().toLowerCase();
-            const statusFilter = document.getElementById('filter-status').value;
-            const categoryFilter = document.getElementById('filter-category').value;
-            const sortOrder = document.getElementById('sort-order').value;
-
-            let result = items.filter(item => {
-                const matchesSearch = !search || item.name.toLowerCase().includes(search) || (item.barcode && item.barcode.includes(search));
-                const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
-
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-                let matchesStatus = true;
-                if (statusFilter === 'expired') matchesStatus = diffDays < 0;
-                else if (statusFilter === 'urgent') matchesStatus = diffDays >= 0 && diffDays <= 2;
-                else if (statusFilter === 'warning') matchesStatus = diffDays >= 3 && diffDays <= 7;
-                else if (statusFilter === 'normal') matchesStatus = diffDays >= 8;
-
-                return matchesSearch && matchesCategory && matchesStatus;
-            });
-
-            result.sort((a, b) => {
-                if (sortOrder === 'expiryAsc') return new Date(a.expiryDate) - new Date(b.expiryDate);
-                if (sortOrder === 'expiryDesc') return new Date(b.expiryDate) - new Date(a.expiryDate);
-                if (sortOrder === 'nameAsc') return a.name.localeCompare(b.name, 'ko');
-                if (sortOrder === 'qtyDesc') return b.quantity - a.quantity;
-                return 0;
-            });
-
-            return result;
-        }
-
-        function filterItems() {
-            renderItems();
-        }
-
-        function filterStatus(status) {
-            document.getElementById('filter-status').value = status;
-            renderItems();
-        }
-
-        function adjustQty(id, delta) {
-            const item = items.find(i => i.id === id);
-            if (item) {
-                item.quantity += delta;
-                if (item.quantity <= 0) deleteItem(id);
-                else renderItems();
-            }
-        }
-
-        function deleteItem(id) {
-            items = items.filter(i => i.id !== id);
-            showToast('상품이 삭제되었습니다.');
-            renderItems();
-        }
-
-        function openManualModal() {
-            document.getElementById('modal-manual').classList.remove('hidden');
-            document.getElementById('manual-date').value = getRelativeDateStr(0);
-        }
-
-        function closeManualModal() {
-            document.getElementById('modal-manual').classList.add('hidden');
-        }
-
-        function editItem(id) {
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-
-            document.getElementById('edit-id').value = item.id;
-            document.getElementById('edit-name').value = item.name;
-            document.getElementById('edit-date').value = item.expiryDate;
-            document.getElementById('edit-time').value = item.expiryTime || '';
-            document.getElementById('edit-category').value = item.category || 'FF';
-            document.getElementById('edit-qty').value = item.quantity || 1;
-
-            document.getElementById('modal-edit').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('modal-edit').classList.add('hidden');
-        }
-
-        function saveEditResult(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const itemIndex = items.findIndex(i => i.id === id);
-
-            if (itemIndex !== -1) {
-                const normDate = parseAndNormalizeDate(document.getElementById('edit-date').value);
-                const normTime = parseAndNormalizeTime(document.getElementById('edit-time').value);
-
-                items[itemIndex] = {
-                    ...items[itemIndex],
-                    name: document.getElementById('edit-name').value,
-                    expiryDate: normDate,
-                    expiryTime: normTime,
-                    category: document.getElementById('edit-category').value,
-                    quantity: parseInt(document.getElementById('edit-qty').value) || 1
-                };
-
-                renderItems();
-                closeEditModal();
-                showToast(`'${items[itemIndex].name}' 정보가 수정되었습니다.`);
-            }
-        }
-
-        // Canvas 인메모리 1024px 리사이즈 압축
-        function compressImageForOcr(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const maxDim = 1024;
-
-                        if (width > maxDim || height > maxDim) {
-                            if (width > height) {
-                                height = Math.round((height * maxDim) / width);
-                                width = maxDim;
-                            } else {
-                                width = Math.round((width * maxDim) / height);
-                                height = maxDim;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-                        resolve(compressedBase64.split(',')[1]);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // 여러 사진 동시 스캔 일괄 처리 핸들러
-        async function handleMultipleImagesSelect(e) {
-            const files = Array.from(e.target.files);
-            if (!files || files.length === 0) return;
-
-            const modalProc = document.getElementById('modal-processing');
-            const progressBar = document.getElementById('processing-progress-bar');
-            const subtext = document.getElementById('processing-subtext');
-
-            modalProc.classList.remove('hidden');
-
-            const totalFiles = files.length;
-            let successCount = 0;
-
-            for (let i = 0; i < totalFiles; i++) {
-                const file = files[i];
-                const currentNum = i + 1;
-                const percent = Math.round((currentNum / totalFiles) * 100);
-
-                progressBar.style.width = `${percent}%`;
-                subtext.textContent = `${currentNum} / ${totalFiles} 장 분석 완료 중...`;
-
-                try {
-                    const base64Data = await compressImageForOcr(file);
-                    const activeKey = getActiveApiKey();
-                    
-                    let detectedData = await callGeminiApiDirect(base64Data, 'image/jpeg', activeKey);
-
-                    if (!detectedData || !detectedData.name) {
-                        detectedData = {
-                            name: `스캔 상품 ${currentNum}`,
-                            expiryDate: getRelativeDateStr(0),
-                            expiryTime: '',
-                            category: '신선'
-                        };
-                    }
-
-                    const finalDate = parseAndNormalizeDate(detectedData.expiryDate);
-                    const finalTime = parseAndNormalizeTime(detectedData.expiryTime);
-
-                    const newItem = {
-                        id: (Date.now() + i).toString(),
-                        name: detectedData.name,
-                        expiryDate: finalDate,
-                        expiryTime: finalTime,
-                        category: detectedData.category || '신선',
-                        quantity: 1
-                    };
-
-                    items.unshift(newItem);
-                    successCount++;
-
-                } catch (err) {
-                    console.error(`File ${i} Process Exception:`, err);
-                }
-            }
-
-            renderItems();
-            modalProc.classList.add('hidden');
-            document.getElementById('direct-camera-file').value = '';
-
-            showToast(`🎉 총 ${successCount}개의 상품 라벨이 일괄 자동 등록되었습니다!`);
-        }
-
-        // Gemini 2.5 Flash Vision API 파싱
-        async function callGeminiApiDirect(base64Image, mimeType, keyToUse) {
-            const prompt = `이 사진은 세븐일레븐 편의점의 다양한 상품(훈제란, 오뎅, 후랑크, 샐러드, 김밥, 덮밥 등) 라벨/패키지 사진입니다.
-
-[엄격한 파싱 지침]:
-1. **제품명(productName)**:
-   - 상품의 메인 타이틀을 정확히 추출하세요. 
-   - 예: "훈제대란", "동의 구운란", "시원한 오뎅한그릇", "숯불구이맛 후랑크", "흑백요리사 꽈리고추돼지고기덮밥", "밸런스스푼 콘샐러드", "닭가슴살샐러드", "스팸마요계란김밥", "페리카나 양념치킨 샐러드", "밸런스스푼 에그듬뿍샐러드"
-   - 스티커의 (★) 기호나 '식품유형' 소문구는 제외하고 실제 상품 이름만 깔끔하게 만드세요.
-
-2. **소비기한(expiryDate, expiryTime)**:
-   - "제조일자:26.07.23" 같은 제조일자는 절대 읽지 마세요!
-   - 반드시 **"소비기한"** 문구 바로 옆이나 아래의 날짜를 읽으세요.
-   - 날짜 뒤에 표기된 **공장/라인 코드(P44, F2, F3 등)나 작업자 이름(최지범, 오종영 A 등)은 무시**하고 순수 날짜만 YYYY-MM-DD 포맷으로 변환하세요.
-   - 예시:
-     - "2026.08.07 까지" -> "2026-08-07"
-     - "2026.08.17 P44 8 까지" -> "2026-08-17"
-     - "2026. 08. 29까지 최지범" -> "2026-08-29"
-     - "26년 07월 28일까지 F2" -> "2026-07-28"
-     - "26.07.28.06시" -> expiryDate: "2026-07-28", expiryTime: "06:00"
-
-3. **카테고리(category)**:
-   - 삼각김밥, 햄버거, 도시락, 덮밥, 김밥 -> "FF"
-   - 유제품, 음료 -> "유제품"
-   - 계란, 훈제란, 샐러드, 오뎅, 핫바, 후랑크, 냉장가공식품 -> "신선"`;
-
-            const payload = {
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        { inlineData: { mimeType: mimeType, data: base64Image } }
-                    ]
-                }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            productName: { type: "STRING" },
-                            expiryDate: { type: "STRING", description: "YYYY-MM-DD" },
-                            expiryTime: { type: "STRING", description: "HH:MM (없으면 빈값)" },
-                            category: { type: "STRING", enum: ["FF", "유제품", "신선", "기타"] }
-                        },
-                        required: ["productName", "expiryDate"]
-                    }
-                }
-            };
-
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${keyToUse}`;
-
-            const delays = [1000, 2000, 4000, 8000];
-
-            for (let i = 0; i < delays.length; i++) {
-                try {
-                    const response = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (response.ok) {
-                        const resData = await response.json();
-                        const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (!text) return null;
-
-                        const parsed = JSON.parse(text);
-                        return {
-                            name: parsed.productName || '스캔 상품',
-                            expiryDate: parseAndNormalizeDate(parsed.expiryDate),
-                            expiryTime: parseAndNormalizeTime(parsed.expiryTime),
-                            category: parsed.category || '신선'
-                        };
-                    }
-                } catch(e) {
-                    // Backoff retry
-                }
-                await new Promise(r => setTimeout(r, delays[i]));
-            }
-
-            return null;
-        }
-
-        function saveManualResult(e) {
-            e.preventDefault();
-            const normDate = parseAndNormalizeDate(document.getElementById('manual-date').value);
-            const normTime = parseAndNormalizeTime(document.getElementById('manual-time').value);
-
-            const newItem = {
-                id: Date.now().toString(),
-                name: document.getElementById('manual-name').value,
-                expiryDate: normDate,
-                expiryTime: normTime,
-                category: document.getElementById('manual-category').value,
-                quantity: parseInt(document.getElementById('manual-qty').value) || 1
-            };
-            items.unshift(newItem);
-            renderItems();
-            closeManualModal();
-            showToast(`'${newItem.name}' 수동 등록 완료!`);
-            document.getElementById('manual-name').value = '';
-        }
-
-        function openReportModal() {
-            const reportEl = document.getElementById('report-content');
-            const now = new Date().toLocaleString('ko-KR');
-
-            const expiredItems = items.filter(i => getDaysUntilExpiry(i.expiryDate) < 0);
-            const urgentItems = items.filter(i => {
-                const d = getDaysUntilExpiry(i.expiryDate);
-                return d >= 0 && d <= 2;
-            });
-
-            let reportHtml = `
-                <div class="font-bold border-b pb-1 mb-1 text-xs text-gray-900">📋 [세븐일레븐] 근무 교대 인수인계 리포트</div>
-                <div><strong>점검일시:</strong> ${now}</div>
-                <div><strong>총 재고:</strong> ${items.length}건</div>
-                <div><strong>🚨 소비기한 경과:</strong> <span class="text-red-700 font-bold">${expiredItems.length}건</span></div>
-                <div><strong>⚠️ 당일/임박 관리:</strong> <span class="text-amber-600 font-bold">${urgentItems.length}건</span></div>
-            `;
-
-            if (expiredItems.length > 0) {
-                reportHtml += `<div class="mt-2 border-t pt-1 font-bold text-red-700">🚨 즉시 폐기 대상:</div>`;
-                expiredItems.forEach(i => {
-                    reportHtml += `<div class="text-red-700">- ${escapeHtml(i.name)} (${i.expiryDate} ${i.expiryTime || ''}) [${i.quantity}개]</div>`;
-                });
-            }
-
-            if (urgentItems.length > 0) {
-                reportHtml += `<div class="mt-2 border-t pt-1 font-bold text-amber-600">⚠️ 당일/임박 대상:</div>`;
-                urgentItems.forEach(i => {
-                    const diffDays = getDaysUntilExpiry(i.expiryDate);
-                    reportHtml += `<div>- ${escapeHtml(i.name)} (${i.expiryDate} ${i.expiryTime || ''}) [${i.quantity}개 / D-${diffDays}]</div>`;
-                });
-            }
-
-            reportEl.innerHTML = reportHtml;
-            document.getElementById('modal-report').classList.remove('hidden');
-        }
-
-        function closeReportModal() {
-            document.getElementById('modal-report').classList.add('hidden');
-        }
-
-        function copyReportText() {
-            const textToCopy = document.getElementById('report-content').innerText;
-            const tempInput = document.createElement("textarea");
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            showToast("인수인계 문구가 복사되었습니다!");
-        }
-
-        function exportToCSV() {
-            let csv = "\uFEFF제품명,카테고리,소비기한,시간,수량\n";
-            items.forEach(i => {
-                csv += `"${i.name}","${i.category}","${i.expiryDate}","${i.expiryTime}",${i.quantity}\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `7eleven_inventory_${getRelativeDateStr(0)}.csv`;
-            a.click();
-            showToast("CSV 다운로드 완료!");
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 3000);
-        }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-    </script>
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">28</div>
+                                <div style="background:#ffedd5; color:#c2410c; padding:3px 5px; margin-top:3px; border-radius:4px; font-size:11px; font-weight:600; line-height:1.3;">
+                                <strong>[FF]</strong> 혜자로운 집밥 제육볶음 도시락 (2개 14:00)
+                            </div>
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">29</div>
+                                
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">30</div>
+                                <div style="background:#e0f2fe; color:#0369a1; padding:3px 5px; margin-top:3px; border-radius:4px; font-size:11px; font-weight:600; line-height:1.3;">
+                                <strong>[유제품]</strong> 매일유업 바나나맛 우유 240ml (5개 00:00)
+                            </div>
+                            </td>
+                        
+                            <td style="height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb; background:#ffffff;">
+                                <div style="font-weight:bold; font-size:13px; color:#111827;">31</div>
+                                
+                            </td>
+                        <td style="background:#f9fafb; height:110px; vertical-align:top; padding:6px; border:1px solid #e5e7eb;"></td></tr>
+            </tbody>
+        </table>
+
+        <div style="margin-top:20px; font-size:12px; color:#6b7280; display:flex; justify-between; items-center;">
+            <div>🔴 초과/당일만료 | 🟠 임박(2일) | 🔵 일반 등록</div>
+            <div>발행일시: 2026. 7. 27. 오전 9:42:23</div>
+        </div>
+    </div>
 </body>
 </html>
