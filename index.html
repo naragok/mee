@@ -1,1370 +1,1915 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="h-full bg-slate-900 text-slate-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7-Eleven 스마트 소비기한 관리자</title>
-    <!-- Tailwind CSS -->
+    <title>편의점 스마트 폐기 관리 시스템</title>
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="스마트폐기">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='67' font-size='55' text-anchor='middle' fill='white'>🏪</text></svg>">
+
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons Library -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        '7eleven-green': '#008060',
-                        '7eleven-red': '#ED1C24',
-                        '7eleven-orange': '#F37021',
-                        '7eleven-bg': '#F4F6F8'
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
                     }
                 }
             }
         }
     </script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Inter Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .animate-pulse-slow { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
     </style>
 </head>
-<body class="bg-7eleven-bg text-gray-800 min-h-screen flex flex-col pb-24 md:pb-8">
+<body class="h-full flex flex-col font-sans antialiased overflow-x-hidden">
 
-    <!-- Navigation / Header -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-                <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-7eleven-green via-7eleven-orange to-7eleven-red text-white font-black text-xl shadow-md tracking-tighter">
-                    7E
-                </div>
-                <div>
-                    <div class="flex items-center space-x-1.5">
-                        <h1 class="text-base font-extrabold text-gray-900 tracking-tight">7-Eleven 소비기한 스마트 매니저</h1>
-                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-7eleven-green rounded-full">v3.0 Smart AI</span>
-                    </div>
-                    <p class="text-[11px] text-gray-500 font-medium">사진 검토 및 자동 등록 기능 강화 완료</p>
-                </div>
+    <!-- Top Header -->
+    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-xs font-semibold text-slate-300 bg-slate-900/60 px-3 py-2 rounded-xl border border-slate-700/50">
+                <i data-lucide="clock" class="w-4 h-4 text-indigo-400"></i>
+                <span id="current-time-display">불러오는 중...</span>
             </div>
-
-            <div class="flex items-center space-x-2">
-                <button onclick="openApiKeyModal()" title="API 키 설정" class="p-2 text-gray-500 hover:text-7eleven-green bg-gray-100 hover:bg-emerald-50 rounded-xl transition flex items-center gap-1 text-xs font-semibold relative">
-                    <i data-lucide="key" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">API 키</span>
-                    <span id="api-key-status-dot" class="w-2 h-2 rounded-full bg-gray-400 absolute top-1 right-1"></span>
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- PWA Install Button -->
+                <button id="pwa-install-btn" onclick="installPWA()" class="hidden flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95 animate-bounce">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">앱 설치</span>
                 </button>
-                <button onclick="resetDemoData()" title="데이터 초기화" class="p-2 text-gray-500 hover:text-7eleven-red bg-gray-100 hover:bg-red-50 rounded-xl transition">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <!-- Data Backup / Restore Buttons -->
+                <button onclick="exportDataJSON()" title="데이터 백업" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-2.5 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
+                    <i data-lucide="database" class="w-3.5 h-3.5 text-cyan-400"></i>
+                    <span class="hidden sm:inline">백업</span>
+                </button>
+                <label title="데이터 복원" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-2.5 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm cursor-pointer">
+                    <i data-lucide="folder-input" class="w-3.5 h-3.5 text-teal-400"></i>
+                    <span class="hidden sm:inline">복원</span>
+                    <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="importDataJSON(event)">
+                </label>
+                <button onclick="openPrintModal()" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
+                    <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-400"></i>
+                    <span class="hidden sm:inline">인쇄 / 내보내기</span>
+                </button>
+                <button onclick="openApiKeyModal()" id="api-key-btn" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
+                    <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span class="hidden sm:inline">API 키</span>
+                </button>
+                <!-- AI Smart Assistant Trigger Button -->
+                <button onclick="openAiModal()" class="flex items-center space-x-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium px-3 py-2 rounded-xl shadow-lg shadow-purple-600/30 transition-all active:scale-95 text-xs sm:text-sm">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                    <span>AI 비서</span>
+                </button>
+                <button onclick="openRegisterModal()" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs sm:text-sm">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>사진 등록</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-4xl mx-auto w-full px-4 pt-4 flex-1">
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- Top Urgent Warning Banner -->
-        <div id="urgent-alert-banner" class="hidden mb-4 p-3.5 bg-red-600 text-white rounded-2xl shadow-lg flex items-center justify-between animate-pulse-slow">
-            <div class="flex items-center space-x-2.5">
-                <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
+        <!-- Top Stats Row -->
+        <div class="lg:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
+                <div class="p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-red-200">긴급 폐기 대상 경고</div>
-                    <div id="urgent-alert-text" class="text-sm font-extrabold">소비기한이 이미 경과했거나 오늘 만료 예정인 상품이 있습니다!</div>
-                </div>
-            </div>
-            <button onclick="filterByUrgent()" class="px-3 py-1.5 bg-white text-red-600 text-xs font-black rounded-xl shadow hover:bg-red-50 transition">
-                바로 확인
-            </button>
-        </div>
-
-        <!-- Summary Dashboard Cards -->
-        <div class="grid grid-cols-4 gap-2.5 mb-4">
-            <div onclick="setFilter('all')" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 text-center cursor-pointer hover:border-7eleven-green transition">
-                <div class="text-[11px] text-gray-500 font-semibold mb-0.5">전체 재고</div>
-                <div id="count-total" class="text-lg md:text-xl font-black text-gray-800">0</div>
-            </div>
-            <div onclick="setFilter('expired')" class="bg-red-50 border border-red-200 p-3 rounded-2xl shadow-sm text-center cursor-pointer hover:border-red-400 transition">
-                <div class="text-[11px] text-red-600 font-bold mb-0.5">🚨 기한초과</div>
-                <div id="count-expired" class="text-lg md:text-xl font-black text-red-600">0</div>
-            </div>
-            <div onclick="setFilter('urgent')" class="bg-orange-50 border border-orange-200 p-3 rounded-2xl shadow-sm text-center cursor-pointer hover:border-orange-400 transition">
-                <div class="text-[11px] text-orange-600 font-bold mb-0.5">⏰ 임박(2일)</div>
-                <div id="count-urgent" class="text-lg md:text-xl font-black text-orange-600">0</div>
-            </div>
-            <div onclick="setFilter('warning')" class="bg-amber-50 border border-amber-200 p-3 rounded-2xl shadow-sm text-center cursor-pointer hover:border-amber-400 transition">
-                <div class="text-[11px] text-amber-700 font-bold mb-0.5">⚠️ 주의(7일)</div>
-                <div id="count-warning" class="text-lg md:text-xl font-black text-amber-700">0</div>
-            </div>
-        </div>
-
-        <!-- Navigation Tabs -->
-        <div class="flex bg-gray-200/80 p-1 rounded-2xl mb-4 text-xs font-bold">
-            <button id="tab-btn-list" onclick="switchView('list')" class="flex-1 py-2 rounded-xl text-center transition bg-white text-7eleven-green shadow-sm">
-                <i data-lucide="list" class="w-3.5 h-3.5 inline mr-1"></i>목록 보기
-            </button>
-            <button id="tab-btn-calendar" onclick="switchView('calendar')" class="flex-1 py-2 rounded-xl text-center transition text-gray-600 hover:text-gray-900">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1"></i>달력 보기
-            </button>
-            <button id="tab-btn-report" onclick="switchView('report')" class="flex-1 py-2 rounded-xl text-center transition text-gray-600 hover:text-gray-900">
-                <i data-lucide="file-text" class="w-3.5 h-3.5 inline mr-1"></i>폐기 보고서
-            </button>
-        </div>
-
-        <!-- View Section 1: Item List View -->
-        <div id="view-list" class="space-y-3">
-            <!-- Search & Filtering Toolbar -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 space-y-2.5">
-                <div class="relative">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i>
-                    <input type="text" id="search-input" oninput="renderItems()" placeholder="상품명 검색 (예: 계란, 오뎅, 피죤, 삼각김밥)..." class="w-full pl-9 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-7eleven-green focus:outline-none">
-                </div>
-
-                <div class="flex items-center justify-between text-xs space-x-2">
-                    <!-- Category Filter Pills -->
-                    <div class="flex space-x-1 overflow-x-auto no-scrollbar py-0.5">
-                        <button onclick="setCategoryFilter('all')" class="cat-pill active px-2.5 py-1 rounded-lg text-[11px] font-bold bg-7eleven-green text-white shrink-0">전체</button>
-                        <button onclick="setCategoryFilter('FF')" class="cat-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 shrink-0">FF/도시락</button>
-                        <button onclick="setCategoryFilter('유제품')" class="cat-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 shrink-0">유제품/음료</button>
-                        <button onclick="setCategoryFilter('신선')" class="cat-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 shrink-0">신선/냉장</button>
-                        <button onclick="setCategoryFilter('기타')" class="cat-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 shrink-0">기타</button>
-                    </div>
-
-                    <!-- Sort Select -->
-                    <select id="sort-select" onchange="renderItems()" class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-700 focus:outline-none shrink-0">
-                        <option value="expiry_asc">임박순 ↑</option>
-                        <option value="expiry_desc">여유순 ↓</option>
-                        <option value="name_asc">상품명순</option>
-                    </select>
+                    <p class="text-[11px] sm:text-xs text-slate-400">오늘 폐기 대상</p>
+                    <p class="text-xl sm:text-2xl font-bold text-red-400" id="stat-today-count">0건</p>
                 </div>
             </div>
 
-            <!-- Inventory List Container -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-12">
-                <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h2 class="font-bold text-gray-800 flex items-center text-xs">
-                        <i data-lucide="package" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
-                        등록 재고 목록
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
+                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0">
+                    <i data-lucide="clock" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] sm:text-xs text-slate-400">내일 폐기 예정</p>
+                    <p class="text-xl sm:text-2xl font-bold text-amber-400" id="stat-tomorrow-count">0건</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
+                <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 shrink-0">
+                    <i data-lucide="package" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] sm:text-xs text-slate-400">전체 등록 상품</p>
+                    <p class="text-xl sm:text-2xl font-bold text-indigo-300" id="stat-total-count">0건</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
+                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
+                    <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] sm:text-xs text-slate-400">이번 달 처리 완료</p>
+                    <p class="text-xl sm:text-2xl font-bold text-emerald-400" id="stat-disposed-count">0건</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEFT / MAIN: Calendar Area -->
+        <section class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
+            <!-- Calendar Navigation Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
+                        <span id="calendar-month-year">2026년 8월</span>
                     </h2>
-                    <span id="list-count" class="text-xs font-bold text-7eleven-green bg-emerald-50 px-2 py-0.5 rounded-full">0개</span>
-                </div>
-
-                <div class="divide-y divide-gray-100" id="item-list">
-                    <!-- Data populated dynamically -->
-                </div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="p-10 text-center">
-                    <i data-lucide="inbox" class="w-10 h-10 mx-auto text-gray-300 mb-2"></i>
-                    <p class="text-gray-500 text-sm font-medium">등록된 상품이 없습니다.</p>
-                    <p class="text-xs text-gray-400 mt-1">하단 [사진 다중스캔] 버튼을 눌러 라벨 사진을 촬영해보세요.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- View Section 2: Mobile Calendar View -->
-        <div id="view-calendar" class="hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <button onclick="changeMonth(-1)" class="p-1.5 hover:bg-gray-100 rounded-xl">
-                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
+                    <button onclick="goToToday()" class="text-xs px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors">
+                        오늘
                     </button>
-                    <h2 id="calendar-month-year" class="font-extrabold text-base text-gray-800">2026년 7월</h2>
-                    <div class="flex items-center space-x-1">
-                        <button onclick="changeMonth(1)" class="p-1.5 hover:bg-gray-100 rounded-xl">
-                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i>
-                        </button>
-                        <button onclick="exportCalendarHtml()" class="ml-2 px-3 py-1.5 bg-7eleven-green text-white text-xs font-bold rounded-xl flex items-center shadow hover:bg-emerald-700 transition">
-                            <i data-lucide="file-spread-sheet" class="w-3.5 h-3.5 mr-1"></i>HTML 달력 내보내기
-                        </button>
-                    </div>
                 </div>
-
-                <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-2">
-                    <div class="text-red-500">일</div>
-                    <div>월</div>
-                    <div>화</div>
-                    <div>수</div>
-                    <div>목</div>
-                    <div>금</div>
-                    <div class="text-blue-500">토</div>
-                </div>
-
-                <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-xs">
-                    <!-- Calendar cells populated dynamically -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="changeMonth(-1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="changeMonth(1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- View Section 3: Disposal Report View -->
-        <div id="view-report" class="hidden space-y-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-                <div class="flex items-center justify-between border-b pb-3">
-                    <div>
-                        <h2 class="font-bold text-base text-gray-900 flex items-center">
-                            <i data-lucide="file-check" class="w-5 h-5 mr-1.5 text-7eleven-red"></i>
-                            오늘 폐기 처리 대상 목록
-                        </h2>
-                        <p class="text-xs text-gray-500">교대 근무자 전달 및 폐기 등록용 리스트</p>
-                    </div>
-                    <div class="flex items-center space-x-1.5">
-                        <button onclick="exportToCsv()" class="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl flex items-center transition">
-                            <i data-lucide="download" class="w-3.5 h-3.5 mr-1"></i>CSV 저장
-                        </button>
-                        <button onclick="exportReportHtml()" class="px-3 py-1.5 bg-7eleven-red hover:bg-red-700 text-white text-xs font-bold rounded-xl flex items-center shadow transition">
-                            <i data-lucide="file-spread-sheet" class="w-3.5 h-3.5 mr-1"></i>HTML 보고서 내보내기
-                        </button>
-                    </div>
-                </div>
-
-                <div id="report-items-container" class="space-y-2">
-                    <!-- Report items inserted dynamically -->
-                </div>
-
-                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600">
-                    <div class="font-bold mb-1 text-gray-800">💡 7-Eleven 폐기 지침 가이드</div>
-                    <ul class="list-disc list-inside space-y-1">
-                        <li>FF 상품(삼각김밥, 도시락, 샌드위치)은 지정시간 30분 전 사전 철수 권장</li>
-                        <li>폐기 등록 후 바코드 스캔 확인하여 정산 처리 진행</li>
-                    </ul>
-                </div>
+            <!-- Calendar Days Header -->
+            <div class="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2">
+                <div class="text-red-400">일</div>
+                <div>월</div>
+                <div>화</div>
+                <div>수</div>
+                <div>목</div>
+                <div>금</div>
+                <div class="text-indigo-400">토</div>
             </div>
-        </div>
+
+            <!-- Calendar Days Grid -->
+            <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 min-h-[360px]">
+                <!-- Dynamically populated JS -->
+            </div>
+
+            <!-- Calendar Legend -->
+            <div class="flex items-center justify-end space-x-4 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-400">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 오늘 폐기</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 내일 폐기</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 정상/여유</span>
+            </div>
+        </section>
+
+        <!-- RIGHT: Item Details & Filter List -->
+        <section class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2" id="selected-date-title">
+                        전체 폐기 관리 목록
+                    </h3>
+                    <p class="text-xs text-slate-400" id="selected-date-subtitle">날짜를 클릭하면 해당 날짜 상품을 골라볼 수 있습니다.</p>
+                </div>
+                <button id="reset-date-filter" onclick="filterByDate(null)" class="hidden text-xs text-indigo-400 hover:text-indigo-300 underline">
+                    전체보기
+                </button>
+            </div>
+
+            <!-- Search & Sort Bar -->
+            <div class="flex items-center space-x-2 mb-3">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                    <input type="text" id="search-input" oninput="renderList()" placeholder="상품명 또는 카테고리 검색..." class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+                <select id="sort-select" onchange="renderList()" class="bg-slate-900/80 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                    <option value="EXPIRY_ASC">유통기한 임박순</option>
+                    <option value="EXPIRY_DESC">유통기한 느린순</option>
+                    <option value="NEWEST">최근 등록순</option>
+                </select>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex space-x-1 p-1 bg-slate-900/60 rounded-xl mb-4 border border-slate-700/40 text-xs">
+                <button onclick="setFilter('ALL')" id="filter-btn-ALL" class="flex-1 py-1.5 font-medium rounded-lg bg-indigo-600 text-white transition-all shadow">전체</button>
+                <button onclick="setFilter('URGENT')" id="filter-btn-URGENT" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">오늘/내일</button>
+                <button onclick="setFilter('ACTIVE')" id="filter-btn-ACTIVE" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">미처리</button>
+                <button onclick="setFilter('DISPOSED')" id="filter-btn-DISPOSED" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">완료됨</button>
+            </div>
+
+            <!-- Product List Scroll Area -->
+            <div id="product-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 max-h-[460px]">
+                <!-- Dynamically populated JS -->
+            </div>
+        </section>
 
     </main>
 
-    <!-- Floating Bottom Action Bar for Mobile -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-3 z-40">
-        <div class="max-w-4xl mx-auto flex items-center space-x-2">
-            <!-- Multi-Photo Scan Button -->
-            <label class="flex-1 bg-gradient-to-r from-7eleven-green to-emerald-600 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold py-3 px-4 rounded-2xl shadow-md flex items-center justify-center cursor-pointer transition active:scale-95 text-xs md:text-sm">
-                <i data-lucide="camera" class="w-5 h-5 mr-2"></i>
-                <span>사진 스캔 (다중 스캔)</span>
-                <input type="file" id="direct-camera-file" accept="image/*" multiple capture="environment" class="hidden" onchange="handleMultipleImagesSelect(event)">
-            </label>
-
-            <!-- Manual Registration Button -->
-            <button onclick="openManualModal()" class="py-3 px-4 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-2xl shadow-md flex items-center justify-center transition active:scale-95 text-xs md:text-sm shrink-0">
-                <i data-lucide="plus" class="w-5 h-5 mr-1"></i>
-                <span>수동 입력</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal NEW: Scanned Items Review & Confirmation Drawer -->
-    <div id="modal-review" class="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden">
-            <div class="p-4 border-b border-gray-200 bg-emerald-50 flex items-center justify-between shrink-0">
-                <div class="flex items-center space-x-2">
-                    <div class="p-2 bg-7eleven-green text-white rounded-xl">
-                        <i data-lucide="check-square" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-extrabold text-gray-900">스캔 결과 확인 및 최종 등록</h3>
-                        <p class="text-[11px] text-gray-500">인식된 상품 정보를 확인하거나 필요한 항목을 수정한 뒤 등록하세요.</p>
-                    </div>
-                </div>
-                <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
+    <!-- CAMERA / PHOTO UPLOAD MODAL -->
+    <div id="register-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400"></i>
+                    사진으로 폐기 상품 등록 (AI 자동인식)
+                </h3>
+                <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
-            <div id="review-items-list" class="p-4 overflow-y-auto space-y-3 flex-1">
-                <!-- Dynamically populated scanned draft items -->
-            </div>
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-5">
 
-            <div class="p-4 border-t border-gray-200 bg-gray-50 flex gap-2 shrink-0">
-                <button onclick="closeReviewModal()" class="w-1/3 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs rounded-xl transition">취소</button>
-                <button onclick="confirmBatchRegistration()" class="w-2/3 py-3 bg-7eleven-green hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center">
-                    <i data-lucide="plus-circle" class="w-4 h-4 mr-1"></i>
-                    <span id="review-confirm-btn-text">선택 항목 모두 등록하기</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 1: Processing Progress Modal -->
-    <div id="modal-processing" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
-            <div class="relative w-16 h-16 mx-auto flex items-center justify-center">
-                <div class="absolute inset-0 border-4 border-7eleven-green/20 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-7eleven-green border-t-transparent rounded-full animate-spin"></div>
-                <i data-lucide="sparkles" class="w-6 h-6 text-7eleven-green animate-pulse"></i>
-            </div>
-            <div>
-                <h3 class="text-base font-extrabold text-gray-900" id="processing-title">Gemini AI 스캔 분석 중...</h3>
-                <p class="text-xs text-gray-500 mt-1" id="processing-subtext">상품 라벨 사진에서 소비기한 정보를 추출하고 있습니다.</p>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                <div id="processing-progress-bar" class="bg-7eleven-green h-full w-0 transition-all duration-300"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 2: Manual Registration Modal -->
-    <div id="modal-manual" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeManualModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 mb-3">수동 제품 직접 등록</h3>
-
-            <form class="space-y-2.5" onsubmit="saveManualResult(event)">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">제품명</label>
-                    <input type="text" id="manual-name" required placeholder="예: 삼각김밥 전주비빔" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="manual-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
+                <!-- Auto Register Toggle Bar -->
+                <div class="flex items-center justify-between bg-indigo-950/50 border border-indigo-500/30 rounded-xl p-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                        <span class="text-xs font-semibold text-indigo-200">사진 촬영 시 원스톱 자동 등록</span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
-                        <input type="time" id="manual-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="manual-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="manual-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">상품 사진 첨부 (선택)</label>
-                    <input type="file" id="manual-image-input" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-7eleven-green">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="auto-submit-toggle" checked class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
                 </div>
 
-                <div class="pt-2">
-                    <button type="submit" class="w-full py-3 bg-7eleven-green text-white font-bold text-sm rounded-xl shadow-md hover:bg-emerald-700 transition">등록하기</button>
-                </div>
-            </form>
-        </div>
-    </div>
+                <!-- Photo Capture / Upload Area -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-slate-300">상품 포장지 또는 유통기한 라벨 촬영</label>
+                    <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[220px] flex flex-col items-center justify-center transition-all group">
+                        
+                        <!-- Video Stream for Live Camera -->
+                        <video id="webcam-video" autoplay playsinline class="hidden w-full h-56 object-cover"></video>
+                        <canvas id="photo-canvas" class="hidden"></canvas>
+                        
+                        <!-- Image Preview -->
+                        <img id="image-preview" class="hidden w-full h-56 object-contain bg-black/40" />
 
-    <!-- Modal 3: Item Edit Modal -->
-    <div id="modal-edit" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
-            <button onclick="closeEditModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
-                <i data-lucide="pencil" class="w-4 h-4 mr-1.5 text-7eleven-green"></i>
-                상품 정보 수정
-            </h3>
-
-            <form class="space-y-2.5" onsubmit="saveEditResult(event)">
-                <input type="hidden" id="edit-id">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">제품명</label>
-                    <input type="text" id="edit-name" required class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">소비기한 날짜</label>
-                        <input type="date" id="edit-date" required class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">시간 (선택)</label>
-                        <input type="time" id="edit-time" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">카테고리</label>
-                        <select id="edit-category" class="w-full px-2 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-                            <option value="FF">FF/도시락/삼김</option>
-                            <option value="유제품">유제품/음료</option>
-                            <option value="신선">신선/냉장</option>
-                            <option value="기타">기타 일반</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-0.5">수량</label>
-                        <input type="number" id="edit-qty" min="1" value="1" class="w-full px-3 py-2 border rounded-xl text-sm focus:border-7eleven-green focus:outline-none">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-0.5">사진 수정/추가 (선택)</label>
-                    <div id="edit-image-preview-container" class="mb-1 hidden">
-                        <img id="edit-image-preview" src="" class="w-16 h-16 object-cover rounded-lg border">
-                    </div>
-                    <input type="file" id="edit-image-input" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-7eleven-green">
-                </div>
-
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeEditModal()" class="w-1/3 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl">취소</button>
-                    <button type="submit" class="w-2/3 py-3 bg-7eleven-green hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md">수정 완료</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal 4: Photo Lightbox View Modal -->
-    <div id="modal-photo-view" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden" onclick="closePhotoModal()">
-        <div class="relative max-w-sm w-full bg-black rounded-2xl overflow-hidden p-2 text-center" onclick="event.stopPropagation()">
-            <button onclick="closePhotoModal()" class="absolute right-3 top-3 bg-black/60 text-white rounded-full p-1.5 z-10">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            <h4 id="photo-modal-title" class="text-white text-xs font-bold py-2 truncate px-8">상품 사진</h4>
-            <div class="max-h-[70vh] overflow-hidden flex items-center justify-center bg-gray-900 rounded-xl">
-                <img id="photo-modal-img" src="" alt="상품 라벨" class="max-h-[70vh] w-auto object-contain rounded-xl">
-            </div>
-            <button onclick="closePhotoModal()" class="mt-3 w-full py-2 bg-gray-800 text-gray-200 text-xs font-bold rounded-xl">닫기</button>
-        </div>
-    </div>
-
-    <!-- Modal 5: Date Details Modal (Calendar click) -->
-    <div id="modal-date-details" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden" onclick="closeDateDetailsModal()">
-        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl relative space-y-3" onclick="event.stopPropagation()">
-            <button onclick="closeDateDetailsModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            <h3 id="date-details-title" class="text-sm font-extrabold text-gray-900 border-b pb-2">만료 상품 목록</h3>
-            <div id="date-details-list" class="divide-y divide-gray-100 max-h-60 overflow-y-auto">
-                <!-- Populated dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal 6: Gemini Custom API Key Modal -->
-    <div id="modal-api-key" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl relative space-y-3.5">
-            <button onclick="closeApiKeyModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-            
-            <div class="flex items-center space-x-2">
-                <div class="p-2 bg-emerald-100 text-7eleven-green rounded-xl">
-                    <i data-lucide="key" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm font-extrabold text-gray-900">Google Gemini API 키 연동</h3>
-                    <p class="text-[11px] text-gray-500">Google AI Studio 무료 API 키 연동 및 검증</p>
-                </div>
-            </div>
-
-            <!-- Free API Key Guide Box -->
-            <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 text-xs space-y-1.5">
-                <div class="font-bold text-7eleven-green flex items-center gap-1">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 무료 API 키발급 방법 (무료 플랜 지원)
-                </div>
-                <ol class="list-decimal list-inside text-[11px] text-gray-600 space-y-1">
-                    <li><a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-7eleven-green font-bold underline hover:text-emerald-800">Google AI Studio (aistudio.google.com)</a> 접속</li>
-                    <li>구글 계정 로그인 후 <b>"Create API key"</b> 클릭</li>
-                    <li>발급된 키<span class="text-gray-400">(AIzaSy...)</span>를 복사하여 아래에 입력하세요.</li>
-                </ol>
-            </div>
-
-            <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-gray-700">API Key 입력</label>
-                <input type="password" id="custom-api-key-input" placeholder="AIzaSy..." class="w-full px-3 py-2 border rounded-xl text-xs focus:border-7eleven-green focus:outline-none">
-            </div>
-
-            <!-- Validation Feedback Message -->
-            <div id="api-key-msg" class="hidden text-xs font-semibold p-2.5 rounded-xl text-center"></div>
-
-            <div class="flex gap-2 pt-1">
-                <button type="button" onclick="verifyAndSaveApiKey()" id="api-key-save-btn" class="w-full py-2.5 bg-7eleven-green hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1">
-                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    <span>검증 및 저장</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Initial Mock Items (Includes the precise scanned items from user's uploaded images)
-        const DEFAULT_ITEMS = [
-            {
-                id: 'scanned-1',
-                name: '피죤 시그니처 미스틱 레인 (80ml)',
-                expiryDate: '2024-02-24',
-                expiryTime: '',
-                category: '기타',
-                quantity: 1,
-                imageUrl: 'https://images.unsplash.com/photo-1585670149967-b4f4da88cc9f?w=150&auto=format&fit=crop&q=60'
-            },
-            {
-                id: 'scanned-2',
-                name: 'CJ FRESHWAY 1등급 계란 훈제대란 (2개입)',
-                expiryDate: '2026-08-07',
-                expiryTime: '',
-                category: '신선',
-                quantity: 1,
-                imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=150&auto=format&fit=crop&q=60'
-            },
-            {
-                id: 'scanned-3',
-                name: '행복담기 동의 구운란',
-                expiryDate: '2026-08-19',
-                expiryTime: '',
-                category: '신선',
-                quantity: 1,
-                imageUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=150&auto=format&fit=crop&q=60'
-            },
-            {
-                id: 'scanned-4',
-                name: 'CJ 삼호어묵 시원한 오뎅한그릇 (360g)',
-                expiryDate: '2026-08-17',
-                expiryTime: '',
-                category: '신선',
-                quantity: 1,
-                imageUrl: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=150&auto=format&fit=crop&q=60'
-            },
-            {
-                id: 'demo-5',
-                name: '7-SELECT 전주비빔 삼각김밥',
-                expiryDate: getRelativeDateStr(0),
-                expiryTime: '20:00',
-                category: 'FF',
-                quantity: 3,
-                imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=60'
-            }
-        ];
-
-        // State variables
-        let items = loadStoredItems();
-        let scannedDrafts = []; // Draft items currently in review modal
-        let currentFilter = 'all'; // 'all', 'expired', 'urgent', 'warning'
-        let currentCategoryFilter = 'all';
-        let currentView = 'list'; // 'list', 'calendar', 'report'
-        let calendarYear = new Date().getFullYear();
-        let calendarMonth = new Date().getMonth(); // 0-based
-
-        // Helper date utility
-        function getRelativeDateStr(offsetDays) {
-            const d = new Date();
-            d.setDate(d.getDate() + offsetDays);
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
-
-        function loadStoredItems() {
-            try {
-                const stored = localStorage.getItem('7eleven_items');
-                if (stored) return JSON.parse(stored);
-            } catch (e) { console.error(e); }
-            return DEFAULT_ITEMS;
-        }
-
-        function saveStoredItems() {
-            try {
-                localStorage.setItem('7eleven_items', JSON.stringify(items));
-            } catch (e) { console.error(e); }
-        }
-
-        function getActiveApiKey() {
-            const userKey = localStorage.getItem('7eleven_custom_api_key');
-            return userKey || '';
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
-
-        function getDaysUntilExpiry(dateStr) {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const exp = new Date(dateStr);
-            exp.setHours(0,0,0,0);
-            const diffTime = exp.getTime() - today.getTime();
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
-
-        function switchView(viewName) {
-            currentView = viewName;
-            document.getElementById('view-list').classList.toggle('hidden', viewName !== 'list');
-            document.getElementById('view-calendar').classList.toggle('hidden', viewName !== 'calendar');
-            document.getElementById('view-report').classList.toggle('hidden', viewName !== 'report');
-
-            ['list', 'calendar', 'report'].forEach(v => {
-                const btn = document.getElementById(`tab-btn-${v}`);
-                if (v === viewName) {
-                    btn.className = 'flex-1 py-2 rounded-xl text-center transition bg-white text-7eleven-green shadow-sm';
-                } else {
-                    btn.className = 'flex-1 py-2 rounded-xl text-center transition text-gray-600 hover:text-gray-900';
-                }
-            });
-
-            if (viewName === 'calendar') renderCalendar();
-            if (viewName === 'report') renderReport();
-        }
-
-        function setFilter(filterType) {
-            currentFilter = filterType;
-            renderItems();
-        }
-
-        function filterByUrgent() {
-            currentFilter = 'urgent';
-            switchView('list');
-            renderItems();
-        }
-
-        function setCategoryFilter(cat) {
-            currentCategoryFilter = cat;
-            document.querySelectorAll('.cat-pill').forEach(btn => {
-                if (btn.textContent.includes(cat) || (cat === 'all' && btn.textContent === '전체')) {
-                    btn.className = 'cat-pill active px-2.5 py-1 rounded-lg text-[11px] font-bold bg-7eleven-green text-white shrink-0';
-                } else {
-                    btn.className = 'cat-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 shrink-0';
-                }
-            });
-            renderItems();
-        }
-
-        function getFilteredAndSortedItems() {
-            const searchQuery = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-            const sortVal = document.getElementById('sort-select')?.value || 'expiry_asc';
-
-            return items.filter(item => {
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-
-                if (currentFilter === 'expired' && diffDays >= 0) return false;
-                if (currentFilter === 'urgent' && (diffDays < 0 || diffDays > 2)) return false;
-                if (currentFilter === 'warning' && (diffDays < 0 || diffDays > 7)) return false;
-
-                if (currentCategoryFilter !== 'all' && item.category !== currentCategoryFilter) return false;
-
-                if (searchQuery && !item.name.toLowerCase().includes(searchQuery)) return false;
-
-                return true;
-            }).sort((a, b) => {
-                if (sortVal === 'expiry_asc') return new Date(a.expiryDate) - new Date(b.expiryDate);
-                if (sortVal === 'expiry_desc') return new Date(b.expiryDate) - new Date(a.expiryDate);
-                if (sortVal === 'name_asc') return a.name.localeCompare(b.name);
-                return 0;
-            });
-        }
-
-        function renderItems() {
-            const listEl = document.getElementById('item-list');
-            const emptyEl = document.getElementById('empty-state');
-            const filtered = getFilteredAndSortedItems();
-
-            let expiredCount = 0;
-            let urgentCount = 0;
-            let warningCount = 0;
-
-            items.forEach(item => {
-                const diffDays = getDaysUntilExpiry(item.expiryDate);
-                if (diffDays < 0) expiredCount++;
-                else if (diffDays <= 2) urgentCount++;
-                else if (diffDays <= 7) warningCount++;
-            });
-
-            document.getElementById('count-total').textContent = items.length;
-            document.getElementById('count-expired').textContent = expiredCount;
-            document.getElementById('count-urgent').textContent = urgentCount;
-            document.getElementById('count-warning').textContent = warningCount;
-            document.getElementById('list-count').textContent = `${filtered.length}개`;
-
-            const urgentBanner = document.getElementById('urgent-alert-banner');
-            if (expiredCount > 0 || urgentCount > 0) {
-                urgentBanner.classList.remove('hidden');
-                document.getElementById('urgent-alert-text').textContent = `기한 초과 ${expiredCount}건, 임박 ${urgentCount}건 조치가 필요합니다!`;
-            } else {
-                urgentBanner.classList.add('hidden');
-            }
-
-            if (filtered.length === 0) {
-                listEl.innerHTML = '';
-                emptyEl.classList.remove('hidden');
-            } else {
-                emptyEl.classList.add('hidden');
-                listEl.innerHTML = filtered.map(item => {
-                    const diffDays = getDaysUntilExpiry(item.expiryDate);
-                    let badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                    let dDayText = `D-${diffDays}`;
-
-                    if (diffDays < 0) {
-                        badgeBg = 'bg-red-600 text-white font-black';
-                        dDayText = `🚨 초과 (${Math.abs(diffDays)}일지남)`;
-                    } else if (diffDays === 0) {
-                        badgeBg = 'bg-7eleven-red text-white font-bold';
-                        dDayText = `오늘만료 (D-0)`;
-                    } else if (diffDays <= 2) {
-                        badgeBg = 'bg-orange-100 text-orange-800 border-orange-300 font-bold';
-                        dDayText = `D-${diffDays} (임박)`;
-                    } else if (diffDays <= 7) {
-                        badgeBg = 'bg-amber-100 text-amber-800 border-amber-300';
-                    }
-
-                    const imgHtml = item.imageUrl ? 
-                        `<img src="${item.imageUrl}" onclick="openPhotoModal('${item.imageUrl}', '${escapeHtml(item.name)}')" alt="${escapeHtml(item.name)}" class="w-12 h-12 rounded-xl object-cover border border-gray-200 shrink-0 cursor-pointer shadow-sm hover:opacity-90">` : 
-                        `<div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 border border-gray-200"><i data-lucide="package" class="w-6 h-6 text-gray-400"></i></div>`;
-
-                    return `
-                        <div class="p-3 ${diffDays < 0 ? 'bg-red-50/60' : ''} flex justify-between items-center gap-2.5 hover:bg-gray-50/80 transition">
-                            ${imgHtml}
-                            <div class="space-y-0.5 flex-1 min-w-0">
-                                <div class="flex items-center space-x-1.5">
-                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${badgeBg} shrink-0">
-                                        ${dDayText}
-                                    </span>
-                                    <h3 class="font-bold text-gray-900 text-sm truncate">${escapeHtml(item.name)}</h3>
-                                </div>
-                                <div class="text-[11px] text-gray-500 flex flex-wrap gap-x-2">
-                                    <span>소비기한: <strong class="text-gray-800">${item.expiryDate}</strong> ${item.expiryTime ? `<span class="text-emerald-700 font-bold">${item.expiryTime}</span>` : ''}</span>
-                                    <span>카테고리: <strong>${item.category || '기타'}</strong></span>
-                                </div>
+                        <!-- Default Placeholder State -->
+                        <div id="upload-placeholder" class="text-center p-6 space-y-3">
+                            <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                                <i data-lucide="camera" class="w-6 h-6"></i>
                             </div>
-                            <div class="flex items-center space-x-1 shrink-0">
-                                <button onclick="adjustQty('${item.id}', -1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-xs flex items-center justify-center active:bg-gray-200 text-gray-700">-</button>
-                                <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
-                                <button onclick="adjustQty('${item.id}', 1)" class="w-7 h-7 bg-gray-100 rounded-lg font-bold text-xs flex items-center justify-center active:bg-gray-200 text-gray-700">+</button>
-                                <button onclick="editItem('${item.id}')" class="p-1.5 text-gray-400 hover:text-7eleven-green transition" title="수정">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                            <div class="text-xs text-slate-400">
+                                <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
+                                <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
+                            </div>
+                            <div class="flex items-center justify-center gap-2 pt-2">
+                                <button type="button" onclick="startCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 shadow">
+                                    <i data-lucide="video" class="w-3.5 h-3.5"></i> 실시간 촬영
                                 </button>
-                                <button onclick="deleteItem('${item.id}')" class="p-1.5 text-gray-400 hover:text-red-600 transition" title="삭제">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
+                                <label class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg cursor-pointer flex items-center gap-1.5">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> 사진 파일 선택
+                                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                                </label>
                             </div>
                         </div>
-                    `;
-                }).join('');
-            }
 
-            lucide.createIcons();
-            saveStoredItems();
-        }
+                        <!-- Live Camera Controls Overlay -->
+                        <div id="camera-controls" class="hidden absolute bottom-3 inset-x-0 flex justify-center space-x-3 z-10">
+                            <button type="button" onclick="capturePhoto()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg flex items-center gap-1.5">
+                                <i data-lucide="aperture" class="w-4 h-4"></i> 찰칵! 캡처하기
+                            </button>
+                            <button type="button" onclick="stopCamera()" class="px-3 py-2 bg-slate-800/80 text-slate-300 hover:text-white text-xs rounded-xl border border-slate-600">
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-        async function compressImageForOcr(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        const MAX_WIDTH = 1200;
-                        const MAX_HEIGHT = 1200;
+                <!-- AI Processing Spinner -->
+                <div id="ai-loading" class="hidden bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center space-x-3 animate-pulse">
+                    <div class="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div>
+                        <p class="text-xs font-bold text-indigo-300">Gemini AI가 사진 분석 중...</p>
+                        <p class="text-[11px] text-indigo-400/80">유통기한 날짜와 상품 이름을 자동으로 추출하고 있습니다.</p>
+                    </div>
+                </div>
 
-                        if (width > height) {
-                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                        } else {
-                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                        }
+                <!-- Product Form -->
+                <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">상품명 *</label>
+                        <input type="text" id="input-name" required placeholder="예: 참치마요 삼각김밥" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    </div>
 
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        const base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-                        resolve(base64);
-                    };
-                    img.onerror = reject;
-                    img.src = event.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function callGeminiApiDirect(base64Image, mimeType, customKey) {
-            const apiKey = (customKey || '').trim().replace(/^["']|["']$/g, '');
-            if (!apiKey) return null; // Fallback gracefully if no key provided
-
-            const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-
-            const promptText = `
-                이 사진은 편의점/마트 상품 라벨입니다.
-                다음 정보를 정밀 추출하여 JSON 형식으로만 응답하세요:
-                {
-                    "name": "상품명 (브랜드/용량 포함)",
-                    "expiryDate": "YYYY-MM-DD",
-                    "expiryTime": "HH:MM",
-                    "category": "FF" 또는 "유제품" 또는 "신선" 또는 "기타"
-                }
-                - 소비기한 날짜가 '2026.08.07' 또는 '2026.08.17 P44' 형태면 YYYY-MM-DD로 정밀 변환하세요.
-                - 연도가 2자리 '26.08.19'면 '2026-08-19'로 변환하세요.
-            `;
-
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [
-                        { text: promptText },
-                        { inlineData: { mimeType: mimeType, data: base64Image } }
-                    ]
-                }],
-                generationConfig: {
-                    responseMimeType: "application/json"
-                }
-            };
-
-            for (const model of models) {
-                try {
-                    const headers = { 'Content-Type': 'application/json' };
-                    let apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-                    if (apiKey.startsWith('AQ.') || apiKey.startsWith('ya29.')) {
-                        headers['Authorization'] = `Bearer ${apiKey}`;
-                    }
-
-                    const res = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (jsonText) {
-                            const cleanedText = jsonText.replace(/```json\n?|\n?```/g, '').trim();
-                            return JSON.parse(cleanedText);
-                        }
-                    }
-                } catch (err) {
-                    console.warn(`Gemini Model ${model} execution error:`, err);
-                }
-            }
-            return null;
-        }
-
-        async function handleMultipleImagesSelect(e) {
-            const files = Array.from(e.target.files);
-            if (!files || files.length === 0) return;
-
-            const modalProc = document.getElementById('modal-processing');
-            const progressBar = document.getElementById('processing-progress-bar');
-            const subtext = document.getElementById('processing-subtext');
-
-            modalProc.classList.remove('hidden');
-
-            const totalFiles = files.length;
-            scannedDrafts = []; // Reset current batch
-
-            for (let i = 0; i < totalFiles; i++) {
-                const file = files[i];
-                const currentNum = i + 1;
-                const percent = Math.round((currentNum / totalFiles) * 100);
-
-                progressBar.style.width = `${percent}%`;
-                subtext.textContent = `${currentNum} / ${totalFiles} 장 라벨 분석 완료 중...`;
-
-                try {
-                    const base64Data = await compressImageForOcr(file);
-                    const activeKey = getActiveApiKey();
-                    
-                    let detectedData = await callGeminiApiDirect(base64Data, 'image/jpeg', activeKey);
-
-                    // High-accuracy fallback guessing based on image order or defaults if API fails
-                    if (!detectedData || !detectedData.name) {
-                        detectedData = guessItemFromFilenameOrIndex(file.name, currentNum);
-                    }
-
-                    scannedDrafts.push({
-                        draftId: 'draft-' + Date.now() + '-' + i,
-                        name: detectedData.name || `스캔 상품 ${currentNum}`,
-                        expiryDate: formatDateString(detectedData.expiryDate) || getRelativeDateStr(10),
-                        expiryTime: detectedData.expiryTime || '',
-                        category: detectedData.category || '신선',
-                        quantity: 1,
-                        imageUrl: 'data:image/jpeg;base64,' + base64Data
-                    });
-
-                } catch (err) {
-                    console.error(`File ${i} Process Exception:`, err);
-                }
-            }
-
-            modalProc.classList.add('hidden');
-            document.getElementById('direct-camera-file').value = '';
-
-            if (scannedDrafts.length > 0) {
-                openReviewModal();
-            } else {
-                showToast('❌ 이미지 분석에 실패했습니다. 다시 시도해주세요.');
-            }
-        }
-
-        // Smart fallback parser for common labels
-        function guessItemFromFilenameOrIndex(filename, index) {
-            const lower = filename.toLowerCase();
-            if (lower.includes('오뎅') || lower.includes('어묵')) {
-                return { name: 'CJ 삼호어묵 시원한 오뎅한그릇', expiryDate: '2026-08-17', category: '신선' };
-            } else if (lower.includes('훈제') || lower.includes('계란')) {
-                return { name: '1등급 계란 훈제대란 (2개입)', expiryDate: '2026-08-07', category: '신선' };
-            } else if (lower.includes('구운란') || lower.includes('동의')) {
-                return { name: '행복담기 동의 구운란', expiryDate: '2026-08-19', category: '신선' };
-            } else if (lower.includes('피죤') || lower.includes('스프레이')) {
-                return { name: '피죤 시그니처 미스틱 레인', expiryDate: '2024-02-24', category: '기타' };
-            }
-            return {
-                name: `스캔 상품 #${index}`,
-                expiryDate: getRelativeDateStr(7),
-                category: '신선'
-            };
-        }
-
-        function formatDateString(rawDate) {
-            if (!rawDate) return '';
-            const cleaned = rawDate.replace(/[^0-9.]/g, '');
-            const parts = cleaned.split('.');
-            if (parts.length === 3) {
-                let yyyy = parts[0];
-                if (yyyy.length === 2) yyyy = '20' + yyyy;
-                const mm = parts[1].padStart(2, '0');
-                const dd = parts[2].padStart(2, '0');
-                return `${yyyy}-${mm}-${dd}`;
-            }
-            return rawDate;
-        }
-
-        function openReviewModal() {
-            const listContainer = document.getElementById('review-items-list');
-            document.getElementById('review-confirm-btn-text').textContent = `총 ${scannedDrafts.length}개 상품 등록하기`;
-
-            listContainer.innerHTML = scannedDrafts.map((draft, idx) => `
-                <div class="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                    <div class="flex items-center gap-3">
-                        <img src="${draft.imageUrl}" class="w-14 h-14 object-cover rounded-xl border border-gray-200 shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <label class="block text-[10px] font-bold text-gray-500 mb-0.5">제품명</label>
-                            <input type="text" value="${escapeHtml(draft.name)}" onchange="updateDraftField('${draft.draftId}', 'name', this.value)" class="w-full px-2 py-1 text-xs font-bold border rounded-lg focus:border-7eleven-green focus:outline-none">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">폐기/유통기한 일자 *</label>
+                            <input type="date" id="input-date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-medium text-slate-400">폐기 시각 *</label>
+                                <div class="flex space-x-1 text-[10px]">
+                                    <button type="button" onclick="setTimePreset('14:00')" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">14시(주간FF)</button>
+                                    <button type="button" onclick="setTimePreset('02:00')" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">02시(야간FF)</button>
+                                    <button type="button" onclick="setTimePreset('00:00')" class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700">00시(자정)</button>
+                                </div>
+                            </div>
+                            <input type="time" id="input-time" required value="00:00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2 text-xs">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 mb-0.5">소비기한</label>
-                            <input type="date" value="${draft.expiryDate}" onchange="updateDraftField('${draft.draftId}', 'expiryDate', this.value)" class="w-full px-1.5 py-1 text-[11px] border rounded-lg focus:border-7eleven-green">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 mb-0.5">카테고리</label>
-                            <select onchange="updateDraftField('${draft.draftId}', 'category', this.value)" class="w-full px-1.5 py-1 text-[11px] border rounded-lg focus:border-7eleven-green">
-                                <option value="FF" ${draft.category === 'FF' ? 'selected' : ''}>FF/도시락</option>
-                                <option value="유제품" ${draft.category === '유제품' ? 'selected' : ''}>유제품/음료</option>
-                                <option value="신선" ${draft.category === '신선' ? 'selected' : ''}>신선/냉장</option>
-                                <option value="기타" ${draft.category === '기타' ? 'selected' : ''}>기타 일반</option>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">카테고리</label>
+                            <select id="input-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <option value="도시락/김밥/샌드위치">도시락/김밥/샌드위치</option>
+                                <option value="유제품/음료">유제품/음료</option>
+                                <option value="신선식품/빵류">신선식품/빵류</option>
+                                <option value="안주/냉장가공">안주/냉장가공</option>
+                                <option value="기타">기타</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-500 mb-0.5">수량</label>
-                            <input type="number" min="1" value="${draft.quantity}" onchange="updateDraftField('${draft.draftId}', 'quantity', parseInt(this.value)||1)" class="w-full px-2 py-1 text-[11px] border rounded-lg focus:border-7eleven-green">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-medium text-slate-400">수량 *</label>
+                                <div class="flex space-x-1 text-[10px]">
+                                    <button type="button" onclick="adjustInputQty(-1)" class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700">-1</button>
+                                    <button type="button" onclick="adjustInputQty(1)" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">+1</button>
+                                    <button type="button" onclick="adjustInputQty(5)" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">+5</button>
+                                </div>
+                            </div>
+                            <input type="number" id="input-qty" min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500">
                         </div>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-end space-x-3">
+                        <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-700">
+                            취소
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-lg shadow-indigo-600/30">
+                            등록 완료
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- API KEY SETTINGS MODAL -->
+    <div id="apikey-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-amber-400"></i>
+                    Gemini API 키 설정
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Google AI Studio에서 무료로 발급받은 Gemini API 키를 입력하면 개인 API 호출 한도로 안전하게 스마트 OCR 상품 인식을 이용할 수 있습니다.
+            </p>
+
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-semibold text-slate-400">Google Gemini API Key</label>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-amber-400 hover:underline flex items-center gap-1 font-medium">
+                        무료 API 키 발급받기 <i data-lucide="external-link" class="w-3 h-3"></i>
+                    </a>
+                </div>
+                <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <button type="button" onclick="clearApiKey()" class="text-xs text-slate-400 hover:text-rose-400 underline">
+                    키 초기화
+                </button>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closeApiKeyModal()" class="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700">
+                        취소
+                    </button>
+                    <button type="button" onclick="saveApiKey()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow">
+                        저장
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT & EXPORT MODAL -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="printer" class="w-5 h-5 text-blue-400"></i>
+                    편의점 폐기 점검표 인쇄 & HTML 내보내기
+                </h3>
+                <button onclick="closePrintModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+    <!-- AI GEMINI HUB MODAL -->
+    <div id="ai-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+                    Gemini AI 스마트 매장 비서
+                </h3>
+                <button onclick="closeAiModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-slate-700 bg-slate-900/60 px-4 pt-2 space-x-1 text-xs font-semibold overflow-x-auto">
+                <button id="ai-tab-analytics-btn" onclick="switchAiTab('analytics')" class="px-3 py-2 text-indigo-400 border-b-2 border-indigo-500 rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap">
+                    <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                    <span>폐기 분석 & 발주 피드백</span>
+                </button>
+                <button id="ai-tab-marketing-btn" onclick="switchAiTab('marketing')" class="px-3 py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap">
+                    <i data-lucide="megaphone" class="w-3.5 h-3.5"></i>
+                    <span>마감할인 문구 & 꿀조합</span>
+                </button>
+                <button id="ai-tab-poster-btn" onclick="switchAiTab('poster')" class="px-3 py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap">
+                    <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                    <span>홍보 포스터 생성</span>
+                </button>
+                <button id="ai-tab-tts-btn" onclick="switchAiTab('tts')" class="px-3 py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap">
+                    <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                    <span>음성 폐기 브리핑</span>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                
+                <!-- TAB 1: Analytics Report -->
+                <div id="ai-tab-analytics" class="space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        등록된 폐기 데이터를 Gemini AI가 정밀 분석하여 <b>가장 폐기가 잦은 카테고리</b>와 <b>발주 수량 조절 피드백</b>을 제안해 드립니다.
+                    </p>
+                    <button onclick="generateAiAnalyticsReport()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="bot" class="w-4 h-4 text-amber-300"></i>
+                        AI 폐기 분석 & 발주 피드백 분석 리포트 생성
+                    </button>
+                    <div id="ai-analytics-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+                        <!-- AI Output Placeholder -->
                     </div>
                 </div>
-            `).join('');
 
-            document.getElementById('modal-review').classList.remove('hidden');
+                <!-- TAB 2: Marketing & Recipes -->
+                <div id="ai-tab-marketing" class="hidden space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        오늘/내일 폐기 임박한 상품을 기반으로 <b>당근마켓/SNS 마감할인 홍보 문구</b>와 <b>편의점 꿀조합 레시피</b>를 자동으로 작성해 드립니다.
+                    </p>
+                    <button onclick="generateAiMarketingCopy()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                        마감할인 홍보글 & 편의점 꿀조합 생성
+                    </button>
+                    <div id="ai-marketing-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+                        <!-- AI Output Placeholder -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: Image Poster Generator -->
+                <div id="ai-tab-poster" class="hidden space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Gemini 3.1 Flash Image 모델을 사용하여 매장 내 출력용 또는 SNS 게시용 <b>마감할인 POP 홍보 이미지 포스터</b>를 생성합니다.
+                    </p>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="ai-poster-prompt" placeholder="예: 참치마요 삼각김밥과 오뎅 50% 마감할인 귀여운 캐릭터 팝업 포스터" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <button onclick="generateAiPosterImage()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold text-xs transition-all shadow shrink-0 flex items-center gap-1.5">
+                            <i data-lucide="image" class="w-4 h-4"></i> 포스터 생성
+                        </button>
+                    </div>
+                    <div id="ai-poster-output" class="hidden text-center space-y-2 pt-2">
+                        <img id="ai-generated-poster-img" class="max-h-80 mx-auto rounded-xl border border-slate-700 shadow-xl object-contain bg-black/40" />
+                        <a id="ai-poster-download-link" download="마감할인_POP_포스터.png" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg border border-slate-600">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> 이미지 저장하기
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TAB 4: TTS Spoken Briefing -->
+                <div id="ai-tab-tts" class="hidden space-y-4 text-center py-2">
+                    <div class="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto">
+                        <i data-lucide="volume-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Gemini 음성 폐기 안내 브리핑</h4>
+                        <p class="text-xs text-slate-400 mt-1">
+                            오늘과 내일의 폐기 상품 현황을 Gemini AI 성우 음성(Kore)으로 명확하게 읽어드립니다.
+                        </p>
+                    </div>
+                    <button onclick="generateAiAudioBriefing()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-all shadow inline-flex items-center gap-2">
+                        <i data-lucide="play" class="w-4 h-4 text-amber-300"></i>
+                        음성 브리핑 재생 시작
+                    </button>
+                    <div id="ai-tts-status" class="hidden text-xs text-indigo-300 font-medium animate-pulse">
+                        📢 음성 브리핑 생성 중... 잠시만 기다려 주세요.
+                    </div>
+                    <audio id="ai-tts-player" class="hidden w-full mt-2" controls></audio>
+                </div>
+
+                <!-- Common Loading Indicator -->
+                <div id="ai-modal-spinner" class="hidden bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center space-x-3 animate-pulse">
+                    <div class="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                    <div>
+                        <p class="text-xs font-bold text-indigo-300">Gemini AI 처리 중...</p>
+                        <p class="text-[11px] text-indigo-400/80">요청한 지능형 컨텐츠를 작성하고 있습니다.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Message -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-800 text-white border border-slate-700 shadow-2xl px-4 py-3 rounded-xl flex items-center space-x-3 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i data-lucide="check-circle" id="toast-icon" class="w-5 h-5 text-emerald-400"></i>
+        <span id="toast-message" class="text-sm font-medium">저장되었습니다.</span>
+    </div>
+
+    <!-- SCRIPT SECTION -->
+    <script>
+        const LOCAL_STORAGE_KEY = 'cvs_disposal_items_v2';
+        let items = [];
+        let currentDate = new Date(); // Controlled calendar date
+        let selectedFilterDate = null; // Filter items by click on calendar
+        let currentTabFilter = 'ALL';
+        let mediaStream = null;
+        let currentCapturedBase64 = null;
+
+        // Sample initial items based on CVS real product photos
+        const initialSampleData = [
+            { id: '1', name: 'CJ 1등급 계란으로 만든 훈제대란', date: '2026-08-07', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
+            { id: '2', name: '행복담기 동의 구운란', date: '2026-08-19', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
+            { id: '3', name: '삼호어묵 시원한 오뎅 한그릇', date: '2026-08-17', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
+            { id: '4', name: '동원 스위트 한스틱 어묵', date: '2026-08-01', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'DISPOSED', image: null },
+            { id: '5', name: '행복담기 동의 훈제란', date: '2026-07-12', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'DISPOSED', image: null },
+            { id: '6', name: '피존 시그니처 미스틱 레인', date: '2024-02-24', time: '00:00', category: '기타', qty: 1, status: 'DISPOSED', image: null }
+        ];
+
+        function formatDate(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getOffsetDate(days) {
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d;
+        }
+
+        function playBeepSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } catch(e) {}
+        }
+
+        function showToast(msg, iconName = 'check-circle', colorClass = 'text-emerald-400') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+            if (toastIcon) {
+                toastIcon.setAttribute('data-lucide', iconName);
+                toastIcon.className = `w-5 h-5 ${colorClass}`;
+            }
             lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
         }
 
-        function updateDraftField(draftId, field, value) {
-            const target = scannedDrafts.find(d => d.draftId === draftId);
-            if (target) {
-                target[field] = value;
+        function updateStats() {
+            const todayStr = formatDate(new Date());
+            const tomorrowStr = formatDate(getOffsetDate(1));
+            const currentMonthStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+
+            const todayPending = items.filter(i => i.date === todayStr && i.status === 'PENDING').length;
+            const tomorrowPending = items.filter(i => i.date === tomorrowStr && i.status === 'PENDING').length;
+            const total = items.length;
+            const disposedThisMonth = items.filter(i => i.status === 'DISPOSED' && i.date.startsWith(currentMonthStr)).length;
+
+            const todayEl = document.getElementById('stat-today-count');
+            const tomorrowEl = document.getElementById('stat-tomorrow-count');
+            const totalEl = document.getElementById('stat-total-count');
+            const disposedEl = document.getElementById('stat-disposed-count');
+
+            if (todayEl) todayEl.innerText = `${todayPending}건`;
+            if (tomorrowEl) tomorrowEl.innerText = `${tomorrowPending}건`;
+            if (totalEl) totalEl.innerText = `${total}건`;
+            if (disposedEl) disposedEl.innerText = `${disposedThisMonth}건`;
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            const formatted = `${now.getFullYear()}. ${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]}) ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+            const clockEl = document.getElementById('current-time-display');
+            if (clockEl) {
+                clockEl.innerText = formatted;
             }
         }
 
-        function closeReviewModal() {
-            document.getElementById('modal-review').classList.add('hidden');
-        }
-
-        function confirmBatchRegistration() {
-            if (scannedDrafts.length === 0) return;
-
-            scannedDrafts.forEach(draft => {
-                items.unshift({
-                    id: Date.now().toString() + Math.random().toString(36).substr(2, 4),
-                    name: draft.name,
-                    expiryDate: draft.expiryDate,
-                    expiryTime: draft.expiryTime || '',
-                    category: draft.category,
-                    quantity: draft.quantity || 1,
-                    imageUrl: draft.imageUrl
-                });
-            });
-
-            const addedCount = scannedDrafts.length;
-            scannedDrafts = [];
-            closeReviewModal();
-            renderItems();
-            showToast(`🎉 ${addedCount}개 상품이 성공적으로 등록되었습니다!`);
-        }
-
-        function adjustQty(id, delta) {
-            const item = items.find(i => i.id === id);
-            if (item) {
-                item.quantity = Math.max(1, (item.quantity || 1) + delta);
-                renderItems();
-            }
-        }
-
-        function deleteItem(id) {
-            items = items.filter(i => i.id !== id);
-            renderItems();
-            showToast('상품이 삭제되었습니다.');
-        }
-
-        function openManualModal() {
-            document.getElementById('manual-date').value = getRelativeDateStr(0);
-            document.getElementById('modal-manual').classList.remove('hidden');
-        }
-
-        function closeManualModal() {
-            document.getElementById('modal-manual').classList.add('hidden');
-        }
-
-        async function saveManualResult(e) {
-            e.preventDefault();
-            let imageUrl = '';
-            const fileInput = document.getElementById('manual-image-input');
-            if (fileInput.files && fileInput.files[0]) {
-                const base64 = await compressImageForOcr(fileInput.files[0]);
-                imageUrl = 'data:image/jpeg;base64,' + base64;
-            }
-
-            const newItem = {
-                id: Date.now().toString(),
-                name: document.getElementById('manual-name').value,
-                expiryDate: document.getElementById('manual-date').value,
-                expiryTime: document.getElementById('manual-time').value,
-                category: document.getElementById('manual-category').value,
-                quantity: parseInt(document.getElementById('manual-qty').value) || 1,
-                imageUrl: imageUrl
+        let deferredPrompt = null;
+        function initPWA() {
+            const manifest = {
+                name: "편의점 스마트 폐기 관리 시스템",
+                short_name: "스마트폐기",
+                description: "사진으로 등록하고 달력으로 한눈에 파악하는 편의점 폐기 관리 시스템",
+                start_url: "./",
+                display: "standalone",
+                background_color: "#0f172a",
+                theme_color: "#0f172a",
+                icons: [
+                    {
+                        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='67' font-size='55' text-anchor='middle' fill='white'>🏪</text></svg>",
+                        sizes: "192x192 512x512",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    }
+                ]
             };
 
-            items.unshift(newItem);
-            renderItems();
-            closeManualModal();
-            showToast(`'${newItem.name}' 등록 완료!`);
-            document.getElementById('manual-name').value = '';
-            document.getElementById('manual-image-input').value = '';
-        }
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestUrl;
+            document.head.appendChild(link);
 
-        function editItem(id) {
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-
-            document.getElementById('edit-id').value = item.id;
-            document.getElementById('edit-name').value = item.name;
-            document.getElementById('edit-date').value = item.expiryDate;
-            document.getElementById('edit-time').value = item.expiryTime || '';
-            document.getElementById('edit-category').value = item.category || 'FF';
-            document.getElementById('edit-qty').value = item.quantity || 1;
-
-            const previewContainer = document.getElementById('edit-image-preview-container');
-            const previewImg = document.getElementById('edit-image-preview');
-            if (item.imageUrl) {
-                previewImg.src = item.imageUrl;
-                previewContainer.classList.remove('hidden');
-            } else {
-                previewContainer.classList.add('hidden');
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    const CACHE_NAME = 'cvs-disposal-pwa-v2';
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `;
+                const swBlob = new Blob([swCode], { type: 'text/javascript' });
+                const swUrl = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swUrl).catch(err => console.debug('SW registration notice:', err));
             }
-
-            document.getElementById('edit-image-input').value = '';
-            document.getElementById('modal-edit').classList.remove('hidden');
         }
 
-        function closeEditModal() {
-            document.getElementById('modal-edit').classList.add('hidden');
-        }
-
-        async function saveEditResult(e) {
+        window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const itemIndex = items.findIndex(i => i.id === id);
+            deferredPrompt = e;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.remove('hidden');
+        });
 
-            if (itemIndex !== -1) {
-                let imageUrl = items[itemIndex].imageUrl || '';
-                const fileInput = document.getElementById('edit-image-input');
-                if (fileInput.files && fileInput.files[0]) {
-                    const base64 = await compressImageForOcr(fileInput.files[0]);
-                    imageUrl = 'data:image/jpeg;base64,' + base64;
-                }
-
-                items[itemIndex] = {
-                    ...items[itemIndex],
-                    name: document.getElementById('edit-name').value,
-                    expiryDate: document.getElementById('edit-date').value,
-                    expiryTime: document.getElementById('edit-time').value,
-                    category: document.getElementById('edit-category').value,
-                    quantity: parseInt(document.getElementById('edit-qty').value) || 1,
-                    imageUrl: imageUrl
-                };
-
-                renderItems();
-                closeEditModal();
-                showToast(`'${items[itemIndex].name}' 정보가 수정되었습니다.`);
+        async function installPWA() {
+            if (!deferredPrompt) {
+                showToast('Safari 등에서는 공유 메뉴의 "홈 화면에 추가"를 눌러주세요.', 'info', 'text-indigo-400');
+                return;
             }
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast('앱이 성공적으로 설치되었습니다!', 'check-circle', 'text-emerald-400');
+            }
+            deferredPrompt = null;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.classList.add('hidden');
         }
 
-        function openPhotoModal(url, name) {
-            document.getElementById('photo-modal-img').src = url;
-            document.getElementById('photo-modal-title').textContent = name;
-            document.getElementById('modal-photo-view').classList.remove('hidden');
-        }
-
-        function closePhotoModal() {
-            document.getElementById('modal-photo-view').classList.add('hidden');
-        }
-
-        function openDateDetailsModal(dateStr) {
-            const dateItems = items.filter(i => i.expiryDate === dateStr);
-            const titleEl = document.getElementById('date-details-title');
-            const listEl = document.getElementById('date-details-list');
-
-            titleEl.textContent = `📅 ${dateStr} 만료 상품 (${dateItems.length}건)`;
-
-            if (dateItems.length === 0) {
-                listEl.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">해당 날짜 만료 상품이 없습니다.</p>`;
+        function loadItems() {
+            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (stored) {
+                try { items = JSON.parse(stored); } catch(e) { items = initialSampleData; }
             } else {
-                listEl.innerHTML = dateItems.map(it => `
-                    <div class="py-2 flex justify-between items-center gap-2">
-                        <div class="flex-1 min-w-0">
-                            <div class="font-bold text-xs text-gray-800 truncate">${escapeHtml(it.name)}</div>
-                            <div class="text-[10px] text-gray-500">${it.category} | 시간: ${it.expiryTime || '미기재'} | 수량: ${it.quantity}개</div>
-                        </div>
-                        <div class="flex items-center space-x-1 shrink-0">
-                            <button onclick="closeDateDetailsModal(); editItem('${it.id}');" class="text-xs text-emerald-700 font-bold p-1">수정</button>
-                            <button onclick="deleteItem('${it.id}'); openDateDetailsModal('${dateStr}');" class="text-xs text-red-600 font-bold p-1">삭제</button>
-                        </div>
-                    </div>
-                `).join('');
+                items = initialSampleData;
+                saveItems();
             }
-
-            document.getElementById('modal-date-details').classList.remove('hidden');
         }
 
-        function closeDateDetailsModal() {
-            document.getElementById('modal-date-details').classList.add('hidden');
+        function saveItems() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+            updateStats();
         }
 
         function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const titleEl = document.getElementById('calendar-month-year');
+            if (titleEl) titleEl.innerText = `${year}년 ${month + 1}월`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            const prevMonthLastDate = new Date(year, month, 0).getDate();
+
             const grid = document.getElementById('calendar-grid');
-            const title = document.getElementById('calendar-month-year');
+            if (!grid) return;
+            grid.innerHTML = '';
 
-            title.textContent = `${calendarYear}년 ${calendarMonth + 1}월`;
+            const todayStr = formatDate(new Date());
 
-            const firstDay = new Date(calendarYear, calendarMonth, 1).getDay();
-            const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-
-            let html = '';
-
-            for (let i = 0; i < firstDay; i++) {
-                html += `<div class="h-16 bg-gray-50/40 rounded-xl p-1 border border-transparent"></div>`;
+            // Previous month trailing days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dayNum = prevMonthLastDate - i;
+                const cell = document.createElement('div');
+                cell.className = "bg-slate-900/30 border border-slate-800/40 rounded-xl p-1.5 opacity-30 text-xs min-h-[52px]";
+                cell.innerText = dayNum;
+                grid.appendChild(cell);
             }
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayItems = items.filter(i => i.expiryDate === dateStr);
+            // Current month days
+            for (let day = 1; day <= lastDate; day++) {
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = dayStr === todayStr;
+                const isSelected = selectedFilterDate === dayStr;
 
-                const isToday = getRelativeDateStr(0) === dateStr;
+                const dayItems = items.filter(item => item.date === dayStr && item.status === 'PENDING');
+                
+                const cell = document.createElement('div');
+                cell.onclick = () => filterByDate(dayStr);
+                
+                let cellClasses = "relative bg-slate-800/80 hover:bg-slate-700/80 border rounded-xl p-1.5 flex flex-col justify-between cursor-pointer transition-all min-h-[52px] group ";
+                if (isSelected) cellClasses += "border-indigo-500 ring-2 ring-indigo-500/40 bg-indigo-950/20 ";
+                else if (isToday) cellClasses += "border-emerald-500/80 bg-emerald-950/10 ";
+                else cellClasses += "border-slate-700/50 ";
 
-                let badgeColorHtml = '';
+                cell.className = cellClasses;
+
+                let badgeColor = "bg-indigo-500";
+                if (dayStr === todayStr) badgeColor = "bg-red-500 animate-pulse";
+                else if (dayStr < todayStr) badgeColor = "bg-rose-600";
+                else if (dayStr === formatDate(getOffsetDate(1))) badgeColor = "bg-amber-500";
+
+                let contentHtml = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold ${isToday ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${day}</span>
+                        ${isToday ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 rounded font-bold">오늘</span>' : ''}
+                    </div>
+                `;
+
                 if (dayItems.length > 0) {
-                    const hasExpired = dayItems.some(i => getDaysUntilExpiry(i.expiryDate) < 0);
-                    const hasUrgent = dayItems.some(i => getDaysUntilExpiry(i.expiryDate) >= 0 && getDaysUntilExpiry(i.expiryDate) <= 2);
-
-                    let bgClass = 'bg-emerald-500';
-                    if (hasExpired) bgClass = 'bg-red-600 animate-pulse';
-                    else if (hasUrgent) bgClass = 'bg-orange-500';
-
-                    badgeColorHtml = `
-                        <div class="mt-1 flex items-center justify-center">
-                            <span class="${bgClass} text-white font-extrabold text-[10px] px-1.5 py-0.5 rounded-full shadow-sm">
-                                ${dayItems.length}건
+                    contentHtml += `
+                        <div class="mt-1 flex items-center justify-between gap-1">
+                            <span class="${badgeColor} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-full text-center truncate shadow">
+                                ${dayItems.length}개 폐기
                             </span>
                         </div>
                     `;
                 }
 
-                html += `
-                    <div onclick="openDateDetailsModal('${dateStr}')" class="h-16 bg-white rounded-xl p-1 border ${isToday ? 'border-7eleven-green bg-emerald-50/30 font-bold' : 'border-gray-200'} cursor-pointer hover:border-7eleven-green transition flex flex-col justify-between">
-                        <div class="text-[11px] ${isToday ? 'text-7eleven-green font-extrabold' : 'text-gray-700'}">${day}</div>
-                        ${badgeColorHtml}
-                    </div>
-                `;
+                cell.innerHTML = contentHtml;
+                grid.appendChild(cell);
             }
 
-            grid.innerHTML = html;
+            lucide.createIcons();
         }
 
         function changeMonth(delta) {
-            calendarMonth += delta;
-            if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
-            if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+            currentDate.setMonth(currentDate.getMonth() + delta);
             renderCalendar();
+            updateStats();
         }
 
-        function renderReport() {
-            const container = document.getElementById('report-items-container');
+        function goToToday() {
+            currentDate = new Date();
+            selectedFilterDate = formatDate(new Date());
+            renderCalendar();
+            renderList();
+        }
 
-            const disposalItems = items.filter(i => getDaysUntilExpiry(i.expiryDate) <= 0);
+        function filterByDate(dateStr) {
+            selectedFilterDate = dateStr;
+            const titleEl = document.getElementById('selected-date-title');
+            const subtitleEl = document.getElementById('selected-date-subtitle');
+            const resetBtn = document.getElementById('reset-date-filter');
 
-            if (disposalItems.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-400">
-                        <i data-lucide="check-circle-2" class="w-10 h-10 mx-auto text-emerald-400 mb-2"></i>
-                        <p class="text-xs font-bold text-gray-600">오늘 처리할 폐기 대상 상품이 없습니다!</p>
-                    </div>
-                `;
+            if (dateStr) {
+                if (titleEl) titleEl.innerText = `${dateStr} 폐기 상품`;
+                if (subtitleEl) subtitleEl.innerText = `선택한 날짜의 유통기한/폐기 항목입니다.`;
+                if (resetBtn) resetBtn.classList.remove('hidden');
             } else {
-                container.innerHTML = disposalItems.map(item => `
-                    <div class="p-3 bg-red-50/50 rounded-xl border border-red-200 flex justify-between items-center text-xs">
-                        <div>
-                            <div class="font-extrabold text-gray-900">${escapeHtml(item.name)}</div>
-                            <div class="text-red-600 font-semibold text-[11px] mt-0.5">
-                                만료일: ${item.expiryDate} (${item.expiryTime || '시간미기재'}) | 수량: ${item.quantity}개
-                            </div>
-                        </div>
-                        <button onclick="deleteItem('${item.id}'); renderReport();" class="px-2.5 py-1 bg-red-600 text-white rounded-lg text-[11px] font-bold shadow">
-                            폐기 완료
-                        </button>
-                    </div>
-                `).join('');
+                if (titleEl) titleEl.innerText = `전체 폐기 관리 목록`;
+                if (subtitleEl) subtitleEl.innerText = `날짜를 클릭하면 해당 날짜 상품을 골라볼 수 있습니다.`;
+                if (resetBtn) resetBtn.classList.add('hidden');
             }
-            lucide.createIcons();
+
+            renderCalendar();
+            renderList();
         }
 
-        function exportToCsv() {
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-            csvContent += "상품명,소비기한,시간,카테고리,수량\n";
+        function setFilter(filterType) {
+            currentTabFilter = filterType;
+            ['ALL', 'URGENT', 'ACTIVE', 'DISPOSED'].forEach(f => {
+                const btn = document.getElementById(`filter-btn-${f}`);
+                if (!btn) return;
+                if (f === filterType) {
+                    btn.className = "flex-1 py-1.5 font-medium rounded-lg bg-indigo-600 text-white transition-all shadow";
+                } else {
+                    btn.className = "flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all";
+                }
+            });
+            renderList();
+        }
 
-            items.forEach(i => {
-                csvContent += `"${i.name}","${i.expiryDate}","${i.expiryTime || ''}","${i.category}","${i.quantity}"\n`;
+        function renderList() {
+            const listEl = document.getElementById('product-list');
+            if (!listEl) return;
+
+            const searchKeyword = document.getElementById('search-input')?.value.trim().toLowerCase() || '';
+            const sortMode = document.getElementById('sort-select')?.value || 'EXPIRY_ASC';
+
+            const todayStr = formatDate(new Date());
+            const tomorrowStr = formatDate(getOffsetDate(1));
+
+            let filtered = [...items];
+
+            // Filter by Date Click
+            if (selectedFilterDate) {
+                filtered = filtered.filter(i => i.date === selectedFilterDate);
+            }
+
+            // Filter by Tab
+            if (currentTabFilter === 'URGENT') {
+                filtered = filtered.filter(i => (i.date === todayStr || i.date === tomorrowStr) && i.status === 'PENDING');
+            } else if (currentTabFilter === 'ACTIVE') {
+                filtered = filtered.filter(i => i.status === 'PENDING');
+            } else if (currentTabFilter === 'DISPOSED') {
+                filtered = filtered.filter(i => i.status === 'DISPOSED');
+            }
+
+            // Filter by Search Keyword
+            if (searchKeyword) {
+                filtered = filtered.filter(i => 
+                    i.name.toLowerCase().includes(searchKeyword) || 
+                    i.category.toLowerCase().includes(searchKeyword)
+                );
+            }
+
+            // Sorting Modes
+            filtered.sort((a, b) => {
+                if (sortMode === 'EXPIRY_ASC') {
+                    return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+                } else if (sortMode === 'EXPIRY_DESC') {
+                    return `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`);
+                } else if (sortMode === 'NEWEST') {
+                    return b.id.localeCompare(a.id);
+                }
+                return 0;
             });
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `7eleven_expiry_report_${getRelativeDateStr(0)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function openApiKeyModal() {
-            const currentKey = getActiveApiKey();
-            document.getElementById('custom-api-key-input').value = currentKey;
-            
-            const msgEl = document.getElementById('api-key-msg');
-            if (currentKey) {
-                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl text-center bg-emerald-100 text-7eleven-green border border-emerald-200';
-                msgEl.textContent = '현재 API 키가 등록되어 작동 중입니다.';
-                msgEl.classList.remove('hidden');
-            } else {
-                msgEl.classList.add('hidden');
-            }
-
-            document.getElementById('modal-api-key').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeApiKeyModal() {
-            document.getElementById('modal-api-key').classList.add('hidden');
-        }
-
-        async function verifyAndSaveApiKey() {
-            const inputEl = document.getElementById('custom-api-key-input');
-            const msgEl = document.getElementById('api-key-msg');
-            const saveBtn = document.getElementById('api-key-save-btn');
-            const key = inputEl.value.trim().replace(/^["']|["']$/g, '');
-
-            if (!key) {
-                localStorage.removeItem('7eleven_custom_api_key');
-                updateApiKeyStatusUI(false);
-                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl text-center bg-gray-100 text-gray-600';
-                msgEl.textContent = 'API 키가 제거되었습니다. 기본 모드로 동작합니다.';
-                msgEl.classList.remove('hidden');
-                setTimeout(closeApiKeyModal, 1500);
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12 text-slate-500 space-y-2">
+                        <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-600"></i>
+                        <p class="text-sm">등록되었거나 조건에 맞는 상품이 없습니다.</p>
+                    </div>
+                `;
+                lucide.createIcons();
                 return;
             }
 
-            // Show testing spinner status
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> API 키 유효성 확인 중...`;
+            listEl.innerHTML = filtered.map(item => {
+                const isDisposed = item.status === 'DISPOSED';
+                const isToday = item.date === todayStr;
+                const isPast = item.date < todayStr;
+
+                let badgeColorClass = "bg-slate-700 text-slate-300";
+                let badgeText = `${item.date} ${item.time}`;
+
+                if (isDisposed) {
+                    badgeColorClass = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                    badgeText = "폐기 완료";
+                } else if (isToday) {
+                    badgeColorClass = "bg-red-500/20 text-red-400 border border-red-500/30 font-bold animate-pulse";
+                    badgeText = `오늘 폐기 (${item.time})`;
+                } else if (isPast) {
+                    badgeColorClass = "bg-rose-950/60 text-rose-300 border border-rose-800/40";
+                    badgeText = `기한 경과 (${item.date})`;
+                } else if (item.date === tomorrowStr) {
+                    badgeColorClass = "bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                    badgeText = `내일 폐기 (${item.time})`;
+                }
+
+                return `
+                    <div class="bg-slate-900/80 border ${isToday && !isDisposed ? 'border-red-500/50' : 'border-slate-700/60'} rounded-xl p-3 flex items-center justify-between gap-3 hover:border-slate-600 transition-all">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            ${item.image ? 
+                                `<img src="${item.image}" class="w-11 h-11 rounded-lg object-cover bg-slate-800 border border-slate-700 shrink-0" />` : 
+                                `<div class="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-slate-400">
+                                    <i data-lucide="package" class="w-5 h-5"></i>
+                                 </div>`
+                            }
+                            <div class="truncate">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs sm:text-sm font-semibold text-white truncate ${isDisposed ? 'line-through text-slate-500' : ''}">${escapeHtml(item.name)}</h4>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">${item.category}</span>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs mt-1">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-medium ${badgeColorClass}">
+                                        ${badgeText}
+                                    </span>
+                                    <div class="flex items-center space-x-1 bg-slate-800/80 border border-slate-700/80 rounded-lg px-1.5 py-0.5">
+                                        <button onclick="changeQty('${item.id}', -1)" title="수량 감소" class="w-4 h-4 rounded hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs active:scale-95 transition-all">-</button>
+                                        <span class="text-[11px] font-semibold text-indigo-300 px-1">${item.qty}개</span>
+                                        <button onclick="changeQty('${item.id}', 1)" title="수량 증가" class="w-4 h-4 rounded hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs active:scale-95 transition-all">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-1 shrink-0">
+                            ${!isDisposed ? `
+                                <button onclick="markAsDisposed('${item.id}')" title="폐기 완료 처리" class="p-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-lg border border-emerald-500/30 transition-all">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                </button>
+                            ` : `
+                                <button onclick="toggleItemStatus('${item.id}')" title="상태 복원" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg transition-all">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                </button>
+                            `}
+                            <button onclick="deleteItem('${item.id}')" title="삭제" class="p-2 bg-slate-800 hover:bg-red-600/20 text-slate-500 hover:text-red-400 rounded-lg transition-all">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
             lucide.createIcons();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function markAsDisposed(id) {
+            items = items.map(i => i.id === id ? { ...i, status: 'DISPOSED' } : i);
+            saveItems();
+            renderCalendar();
+            renderList();
+            playBeepSound();
+            showToast('폐기 완료 처리가 진행되었습니다.', 'check-circle', 'text-emerald-400');
+        }
+
+        function changeQty(id, delta) {
+            items = items.map(i => {
+                if (i.id === id) {
+                    const currentQty = parseInt(i.qty, 10) || 1;
+                    const newQty = Math.max(1, currentQty + delta);
+                    return { ...i, qty: newQty };
+                }
+                return i;
+            });
+            saveItems();
+            renderList();
+            updateStats();
+        }
+
+        function adjustInputQty(delta) {
+            const qtyInput = document.getElementById('input-qty');
+            if (!qtyInput) return;
+            const currentVal = parseInt(qtyInput.value, 10) || 1;
+            qtyInput.value = Math.max(1, currentVal + delta);
+        }
+
+        function toggleItemStatus(id) {
+            items = items.map(i => i.id === id ? { ...i, status: 'PENDING' } : i);
+            saveItems();
+            renderCalendar();
+            renderList();
+        }
+
+        function deleteItem(id) {
+            items = items.filter(i => i.id !== id);
+            saveItems();
+            renderCalendar();
+            renderList();
+            showToast('상품이 삭제되었습니다.', 'trash-2', 'text-rose-400');
+        }
+
+        function setTimePreset(timeStr) {
+            const timeInput = document.getElementById('input-time');
+            if (timeInput) timeInput.value = timeStr;
+        }
+
+        function openRegisterModal() {
+            document.getElementById('register-modal').classList.remove('hidden');
+            document.getElementById('product-form').reset();
+            document.getElementById('input-date').value = formatDate(new Date());
+            currentCapturedBase64 = null;
+            resetImagePreview();
+        }
+
+        function closeRegisterModal() {
+            stopCamera();
+            document.getElementById('register-modal').classList.add('hidden');
+        }
+
+        function resetImagePreview() {
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-preview').src = '';
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('camera-controls').classList.add('hidden');
+            document.getElementById('webcam-video').classList.add('hidden');
+        }
+
+        async function startCamera() {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+                const video = document.getElementById('webcam-video');
+                video.srcObject = mediaStream;
+                video.classList.remove('hidden');
+                document.getElementById('upload-placeholder').classList.add('hidden');
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('camera-controls').classList.remove('hidden');
+            } catch (err) {
+                if (window.location.protocol === 'file:') {
+                    showToast('보안 정책상 로컬 파일(file://)에서는 카메라를 켤 수 없습니다. 로컬 웹 서버를 열거나 [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-rose-400');
+                } else {
+                    showToast('카메라 권한이 없거나 활성화할 수 없습니다. [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-amber-400');
+                }
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            document.getElementById('webcam-video').classList.add('hidden');
+            document.getElementById('camera-controls').classList.add('hidden');
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('webcam-video');
+            const canvas = document.getElementById('photo-canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            stopCamera();
+
+            currentCapturedBase64 = dataUrl;
+            showImagePreview(dataUrl);
+            analyzeImageWithGemini(dataUrl);
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                currentCapturedBase64 = dataUrl;
+                showImagePreview(dataUrl);
+                analyzeImageWithGemini(dataUrl);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showImagePreview(url) {
+            const img = document.getElementById('image-preview');
+            img.src = url;
+            img.classList.remove('hidden');
+            document.getElementById('upload-placeholder').classList.add('hidden');
+        }
+
+        function getApiKey() {
+            return localStorage.getItem('custom_gemini_api_key') || "";
+        }
+
+        function openApiKeyModal() {
+            document.getElementById('input-api-key').value = getApiKey();
+            document.getElementById('apikey-modal').classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('apikey-modal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('input-api-key').value.trim();
+            if (key) {
+                localStorage.setItem('custom_gemini_api_key', key);
+                showToast('Gemini API 키가 저장되었습니다.', 'key', 'text-amber-400');
+            } else {
+                localStorage.removeItem('custom_gemini_api_key');
+                showToast('기본 API 설정으로 변경되었습니다.', 'check-circle', 'text-indigo-400');
+            }
+            closeApiKeyModal();
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem('custom_gemini_api_key');
+            document.getElementById('input-api-key').value = '';
+            showToast('API 키가 초기화되었습니다.', 'rotate-ccw', 'text-slate-400');
+            closeApiKeyModal();
+        }
+
+        async function analyzeImageWithGemini(base64DataUrl) {
+            const loadingEl = document.getElementById('ai-loading');
+            loadingEl.classList.remove('hidden');
 
             try {
-                // Validate Gemini API key using official model listing endpoint
-                const testRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+                const base64Parts = base64DataUrl.split(',');
+                const mimeType = base64Parts[0].match(/:(.*?);/)[1];
+                const base64Data = base64Parts[1];
+
+                const promptText = `
+                이 사진이 편의점/마트 판매 제품 또는 유통기한/소비기한이 표기된 사진인지 판별하고 파싱하여 JSON으로 응답하세요.
                 
-                if (testRes.ok) {
-                    localStorage.setItem('7eleven_custom_api_key', key);
-                    updateApiKeyStatusUI(true);
-                    
-                    msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl text-center bg-emerald-100 text-7eleven-green border border-emerald-200';
-                    msgEl.textContent = '✅ API 키 유효성 확인 완료! 성공적으로 저장되었습니다.';
-                    msgEl.classList.remove('hidden');
-                    
-                    showToast('🎉 Gemini 무료 API 키가 정상 등록되었습니다!');
-                    setTimeout(closeApiKeyModal, 1500);
-                } else {
-                    const errData = await testRes.json().catch(() => ({}));
-                    const errMsg = errData.error?.message || 'API 키가 올바르지 않거나 권한이 없습니다.';
-                    
-                    msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl text-center bg-red-100 text-red-600 border border-red-200';
-                    msgEl.textContent = `❌ 등록 실패: ${errMsg}`;
-                    msgEl.classList.remove('hidden');
+                응답 JSON 구조:
+                {
+                  "isProduct": true 또는 false (제품이 아니거나 유통기한이 전혀 없으면 false),
+                  "productName": "상품 이름 (예: 참치마요 삼각김밥, 훈제대란 등)",
+                  "expirationDate": "YYYY-MM-DD" (유통기한/소비기한 일자. 연도 2자리는 20XX년),
+                  "expirationTime": "HH:MM" (기본값 "00:00". 주간FF면 "14:00", 야간FF면 "02:00"),
+                  "category": "도시락/김밥/샌드위치", "유제품/음료", "신선식품/빵류", "안주/냉장가공", "기타" 중 하나
+                }
+
+                만약 사진 속 물체가 일반 소지품이거나 유통기한을 인식할 수 없는 물체라면 isProduct를 false로 반환해 주세요.
+                응답은 오직 JSON 포맷만 반환해 주세요.
+                `;
+
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            { inlineData: { mimeType: mimeType, data: base64Data } }
+                        ]
+                    }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const res = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (jsonText) {
+                    const parsed = JSON.parse(jsonText);
+
+                    // 1. 제품이 아니거나 유통기한 인식이 불가한 경우
+                    if (!parsed.isProduct || !parsed.expirationDate) {
+                        showToast('제품 또는 유통기한을 인식하지 못했습니다. 직접 입력해 주세요.', 'alert-triangle', 'text-amber-400');
+                        if (parsed.productName) document.getElementById('input-name').value = parsed.productName;
+                        return;
+                    }
+
+                    // 2. 폼 입력창에 데이터 채우기
+                    if (parsed.productName) document.getElementById('input-name').value = parsed.productName;
+                    if (parsed.expirationDate) document.getElementById('input-date').value = parsed.expirationDate;
+                    if (parsed.expirationTime) document.getElementById('input-time').value = parsed.expirationTime;
+                    if (parsed.category) document.getElementById('input-category').value = parsed.category;
+
+                    // 3. 자동 등록 옵션 체크 여부에 따른 처리
+                    const isAutoSubmit = document.getElementById('auto-submit-toggle')?.checked;
+
+                    if (isAutoSubmit) {
+                        const newItem = {
+                            id: Date.now().toString(),
+                            name: parsed.productName || '등록 상품',
+                            date: parsed.expirationDate,
+                            time: parsed.expirationTime || '00:00',
+                            category: parsed.category || '기타',
+                            qty: 1,
+                            status: 'PENDING',
+                            image: currentCapturedBase64 || null
+                        };
+
+                        items.push(newItem);
+                        saveItems();
+                        closeRegisterModal();
+                        renderCalendar();
+                        renderList();
+                        playBeepSound();
+
+                        showToast(`✨ [${newItem.name}] (${newItem.date}) 자동 등록 완료!`, 'sparkles', 'text-emerald-400');
+                    } else {
+                        showToast('AI가 상품 정보를 추출했습니다! 내용을 확인 후 등록하세요.', 'check-circle', 'text-indigo-400');
+                    }
                 }
             } catch (err) {
-                msgEl.className = 'text-xs font-semibold p-2.5 rounded-xl text-center bg-red-100 text-red-600 border border-red-200';
-                msgEl.textContent = '❌ 네트워크 오류 또는 연결에 실패했습니다.';
-                msgEl.classList.remove('hidden');
+                console.error("Gemini Vision API 오류:", err);
+                showToast('AI 분석 중 오류가 발생했습니다. 직접 입력을 이용해 주세요.', 'alert-circle', 'text-rose-400');
             } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>검증 및 저장</span>`;
+                loadingEl.classList.add('hidden');
+            }
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('input-name').value.trim();
+            const date = document.getElementById('input-date').value;
+            const time = document.getElementById('input-time').value || '00:00';
+            const category = document.getElementById('input-category').value;
+            const qty = parseInt(document.getElementById('input-qty').value, 10) || 1;
+
+            if (!name || !date) {
+                showToast('상품명과 폐기 날짜를 입력해 주세요.', 'alert-circle', 'text-rose-400');
+                return;
+            }
+
+            const newItem = {
+                id: Date.now().toString(),
+                name,
+                date,
+                time,
+                category,
+                qty,
+                status: 'PENDING',
+                image: currentCapturedBase64 || null
+            };
+
+            items.push(newItem);
+            saveItems();
+
+            closeRegisterModal();
+            renderCalendar();
+            renderList();
+            playBeepSound();
+            showToast(`${name} 상품이 등록되었습니다.`, 'check-circle', 'text-emerald-400');
+        }
+
+        function exportDataJSON() {
+            const jsonStr = JSON.stringify(items, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = formatDate(new Date());
+
+            a.href = url;
+            a.download = `편의점_폐기관리_백업_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('데이터 백업 파일이 저장되었습니다.', 'database', 'text-cyan-400');
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        items = importedData;
+                        saveItems();
+                        renderCalendar();
+                        renderList();
+                        showToast('성공적으로 데이터를 복원했습니다!', 'check-circle', 'text-emerald-400');
+                    } else {
+                        showToast('올바르지 않은 백업 파일 형식입니다.', 'alert-circle', 'text-rose-400');
+                    }
+                } catch(err) {
+                    showToast('파일을 읽는 도중 오류가 발생했습니다.', 'alert-circle', 'text-rose-400');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openPrintModal() {
+            populatePrintYearMonthDropdowns();
+            togglePrintMonthPicker();
+            document.getElementById('print-modal').classList.remove('hidden');
+        }
+
+        function populatePrintYearMonthDropdowns(targetYear, targetMonth) {
+            const yearSelect = document.getElementById('print-year-select');
+            const monthSelect = document.getElementById('print-month-select');
+            if (!yearSelect || !monthSelect) return;
+
+            const currYear = targetYear !== undefined ? targetYear : currentDate.getFullYear();
+            const currMonth = targetMonth !== undefined ? targetMonth : currentDate.getMonth() + 1;
+
+            // 연도 드롭다운 생성 (현재 연도 기준 -2년 ~ +3년)
+            const startYear = currentDate.getFullYear() - 2;
+            const endYear = currentDate.getFullYear() + 3;
+            let yearHtml = '';
+            for (let y = startYear; y <= endYear; y++) {
+                yearHtml += `<option value="${y}" ${y === currYear ? 'selected' : ''}>${y}년</option>`;
+            }
+            yearSelect.innerHTML = yearHtml;
+
+            // 월 드롭다운 생성 (1월 ~ 12월)
+            let monthHtml = '';
+            for (let m = 1; m <= 12; m++) {
+                monthHtml += `<option value="${m}" ${m === currMonth ? 'selected' : ''}>${m}월</option>`;
+            }
+            monthSelect.innerHTML = monthHtml;
+
+            updatePrintMonthPickerFromSelects();
+        }
+
+        function updatePrintMonthPickerFromSelects() {
+            const yearSelect = document.getElementById('print-year-select');
+            const monthSelect = document.getElementById('print-month-select');
+            const countEl = document.getElementById('print-month-item-count');
+            if (!yearSelect || !monthSelect) return;
+
+            const y = yearSelect.value;
+            const m = String(monthSelect.value).padStart(2, '0');
+            const monthPrefix = `${y}-${m}`;
+
+            const count = items.filter(i => i.date.startsWith(monthPrefix)).length;
+            if (countEl) {
+                countEl.innerHTML = `<i data-lucide="package" class="w-3 h-3 inline mr-1 text-indigo-400"></i>선택 월 (${y}년 ${parseInt(m)}월): <strong class="text-indigo-300 font-bold">${count}건</strong> 항목 존재`;
                 lucide.createIcons();
             }
         }
 
-        function updateApiKeyStatusUI(hasValidKey) {
-            const statusDot = document.getElementById('api-key-status-dot');
-            if (statusDot) {
-                if (hasValidKey) {
-                    statusDot.className = 'w-2 h-2 rounded-full bg-emerald-500 absolute top-1 right-1 ring-2 ring-white';
-                    statusDot.title = 'API 키 연동됨';
+        function closePrintModal() {
+            document.getElementById('print-modal').classList.add('hidden');
+        }
+
+        function togglePrintMonthPicker() {
+            const target = document.querySelector('input[name="print-target"]:checked')?.value;
+            const container = document.getElementById('print-month-container');
+            if (container) {
+                if (target === 'MONTH') {
+                    container.classList.remove('hidden');
+                    updatePrintMonthPickerFromSelects();
                 } else {
-                    statusDot.className = 'w-2 h-2 rounded-full bg-gray-400 absolute top-1 right-1';
-                    statusDot.title = 'API 키 미연동';
+                    container.classList.add('hidden');
                 }
+            }
+            lucide.createIcons();
+        }
+
+        function adjustPrintMonth(delta) {
+            const yearSelect = document.getElementById('print-year-select');
+            const monthSelect = document.getElementById('print-month-select');
+            if (!yearSelect || !monthSelect) return;
+
+            let y = parseInt(yearSelect.value, 10);
+            let m = parseInt(monthSelect.value, 10) + delta;
+
+            if (m > 12) {
+                y += 1;
+                m = 1;
+            } else if (m < 1) {
+                y -= 1;
+                m = 12;
+            }
+
+            populatePrintYearMonthDropdowns(y, m);
+        }
+
+        function setPrintMonthToCurrent() {
+            populatePrintYearMonthDropdowns(currentDate.getFullYear(), currentDate.getMonth() + 1);
+        }
+
+        function getFilteredPrintItems() {
+            const target = document.querySelector('input[name="print-target"]:checked')?.value || 'TODAY';
+            const todayStr = formatDate(new Date());
+
+            let result = [...items];
+
+            if (target === 'TODAY') {
+                result = result.filter(i => i.date === todayStr);
+            } else if (target === 'SELECTED') {
+                if (selectedFilterDate) {
+                    result = result.filter(i => i.date === selectedFilterDate);
+                } else {
+                    result = result.filter(i => i.date === todayStr);
+                }
+            } else if (target === 'MONTH') {
+                const yearSelect = document.getElementById('print-year-select');
+                const monthSelect = document.getElementById('print-month-select');
+                const y = yearSelect?.value || currentDate.getFullYear();
+                const m = String(monthSelect?.value || (currentDate.getMonth() + 1)).padStart(2, '0');
+                const selectedMonthStr = `${y}-${m}`;
+                result = result.filter(i => i.date.startsWith(selectedMonthStr));
+            } else if (target === 'ACTIVE') {
+                result = result.filter(i => i.status === 'PENDING');
+            }
+
+            result.sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+            return result;
+        }
+
+        function generatePrintableHtmlContent() {
+            const printItems = getFilteredPrintItems();
+            const printStyle = document.querySelector('input[name="print-style"]:checked')?.value || 'CHECKLIST';
+            const target = document.querySelector('input[name="print-target"]:checked')?.value || 'TODAY';
+            const nowStr = new Date().toLocaleString('ko-KR');
+            const todayStr = formatDate(new Date());
+
+            let periodLabel = todayStr;
+            if (target === 'MONTH') {
+                const yearSelect = document.getElementById('print-year-select');
+                const monthSelect = document.getElementById('print-month-select');
+                if (yearSelect && monthSelect) {
+                    periodLabel = `${yearSelect.value}년 ${monthSelect.value}월`;
+                }
+            } else if (target === 'SELECTED' && selectedFilterDate) {
+                periodLabel = selectedFilterDate;
+            } else if (target === 'ACTIVE') {
+                periodLabel = '전체 미처리';
+            }
+
+            const tableRows = printItems.map((item, idx) => {
+                const isDisposed = item.status === 'DISPOSED';
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0; height: 38px;">
+                        <td style="text-align: center; font-weight: bold; width: 40px;">${idx + 1}</td>
+                        ${printStyle === 'CHECKLIST' ? `<td style="text-align: center; width: 45px; font-size: 16px;">[ &nbsp; ]</td>` : ''}
+                        <td style="padding: 6px 10px; font-weight: 600;">${escapeHtml(item.name)}</td>
+                        <td style="text-align: center; padding: 6px 10px;">${item.category}</td>
+                        <td style="text-align: center; font-weight: bold; color: ${item.date <= todayStr ? '#dc2626' : '#2563eb'}; padding: 6px 10px;">
+                            ${item.date} ${item.time !== '00:00' ? '(' + item.time + ')' : ''}
+                        </td>
+                        <td style="text-align: center; font-weight: bold; padding: 6px 10px; width: 60px;">${item.qty}개</td>
+                        <td style="text-align: center; font-weight: 500; color: ${isDisposed ? '#059669' : '#d97706'}; width: 70px;">
+                            ${isDisposed ? '완료됨' : '대기중'}
+                        </td>
+                        ${printStyle === 'CHECKLIST' ? `<td style="border-left: 1px solid #e2e8f0; width: 80px;"></td>` : ''}
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>편의점 폐기 점검표 - ${todayStr}</title>
+    <style>
+        @page { size: A4 portrait; margin: 12mm; }
+        body { font-family: 'Pretendard', sans-serif; color: #1e293b; background: #fff; margin: 0; padding: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 15px; }
+        .title { font-size: 22px; font-weight: 800; color: #0f172a; }
+        .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .sign-box { border: 1px solid #94a3b8; border-collapse: collapse; font-size: 11px; text-align: center; }
+        .sign-box td { border: 1px solid #94a3b8; padding: 4px 8px; }
+        .table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .table th { background: #f1f5f9; color: #334155; font-weight: 700; border-top: 2px solid #334155; border-bottom: 1px solid #cbd5e1; padding: 8px 6px; }
+        .footer { margin-top: 25px; padding-top: 10px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; }
+        .notice { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-top: 15px; font-size: 11px; line-height: 1.5; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="title">🏪 편의점 폐기 상품 점검표 (${periodLabel})</div>
+            <div class="subtitle">출력 일시: ${nowStr} | 출력 건수: 총 ${printItems.length}건</div>
+        </div>
+        ${printStyle === 'CHECKLIST' ? `
+        <table class="sign-box">
+            <tr>
+                <td rowspan="2" style="background:#f8fafc; font-weight:bold; width:20px;">결<br>재</td>
+                <td style="width:65px; background:#f8fafc;">점장/매니저</td>
+                <td style="width:65px; background:#f8fafc;">근무자</td>
+            </tr>
+            <tr style="height:35px;">
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+        ` : ''}
+    </div>
+
+    ${printItems.length === 0 ? `
+        <div style="text-align:center; padding: 50px 0; color: #94a3b8; font-size: 14px;">
+            해당되는 폐기 관리 항목이 없습니다.
+        </div>
+    ` : `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>NO</th>
+                    ${printStyle === 'CHECKLIST' ? '<th>체크</th>' : ''}
+                    <th>상품명</th>
+                    <th>카테고리</th>
+                    <th>폐기 유통기한 (시각)</th>
+                    <th>수량</th>
+                    <th>상태</th>
+                    ${printStyle === 'CHECKLIST' ? '<th>비고/서명</th>' : ''}
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+        </table>
+    `}
+
+    <div class="notice">
+        <b>💡 매장 폐기 관리 수칙</b><br>
+        1. 지정된 폐기 시각 10분 전에 매대에서 해당 상품을 빼내어 카운터로 이동합니다.<br>
+        2. 포장 상태 및 수량을 점검하고 점검표의 [  ]에 체크 표시를 진행합니다.<br>
+        3. POS 등록 후 지정 폐기함에 보관합니다.
+    </div>
+
+    <div class="footer">
+        <span>편의점 스마트 폐기 관리 시스템</span>
+        <span>페이지 1 / 1</span>
+    </div>
+</body>
+</html>
+            `;
+        }
+
+        function executeDirectPrint() {
+            const printContent = generatePrintableHtmlContent();
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    closePrintModal();
+                }, 300);
+            } else {
+                showToast('팝업 차단을 해제한 후 다시 시도해 주세요.', 'alert-circle', 'text-amber-400');
             }
         }
 
-        function resetDemoData() {
-            items = [...DEFAULT_ITEMS];
-            renderItems();
-            showToast('데이터가 데모 상태로 초기화되었습니다.');
-        }
+        function downloadPrintableHtml() {
+            const htmlContent = generatePrintableHtmlContent();
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const target = document.querySelector('input[name="print-target"]:checked')?.value || 'TODAY';
+            let fileTag = formatDate(new Date());
+            if (target === 'MONTH') {
+                const yearSelect = document.getElementById('print-year-select');
+                const monthSelect = document.getElementById('print-month-select');
+                if (yearSelect && monthSelect) {
+                    fileTag = `${yearSelect.value}_${String(monthSelect.value).padStart(2, '0')}`;
+                }
+            }
 
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-900/90 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl z-50 animate-bounce';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
+            a.href = url;
+            a.download = `편의점_폐기_점검표_${fileTag}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('인쇄용 HTML 파일이 저장되었습니다.', 'download', 'text-emerald-400');
+            closePrintModal();
         }
 
         window.onload = function() {
-            renderItems();
-            updateApiKeyStatusUI(Boolean(getActiveApiKey()));
             lucide.createIcons();
+            initPWA();
+            loadItems();
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderCalendar();
+            renderList();
+            updateStats();
         };
+
+        // AI HUB MODAL & GEMINI API INTEGRATION
+        function openAiModal() {
+            document.getElementById('ai-modal').classList.remove('hidden');
+            switchAiTab('analytics');
+        }
+
+        function closeAiModal() {
+            document.getElementById('ai-modal').classList.add('hidden');
+            const player = document.getElementById('ai-tts-player');
+            if (player) { player.pause(); }
+        }
+
+        function switchAiTab(tabName) {
+            const tabs = ['analytics', 'marketing', 'poster', 'tts'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`ai-tab-${t}-btn`);
+                const content = document.getElementById(`ai-tab-${t}`);
+                if (t === tabName) {
+                    if (btn) btn.className = "px-3 py-2 text-indigo-400 border-b-2 border-indigo-500 rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap font-bold";
+                    if (content) content.classList.remove('hidden');
+                } else {
+                    if (btn) btn.className = "px-3 py-2 text-slate-400 hover:text-slate-200 border-b-2 border-transparent rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap font-medium";
+                    if (content) content.classList.add('hidden');
+                }
+            });
+            lucide.createIcons();
+        }
+
+        async function fetchWithBackoff(url, options, maxRetries = 3) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                    if (res.status === 429 || res.status >= 500) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
+                    }
+                    return res;
+                } catch (e) {
+                    if (i === maxRetries - 1) throw e;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+            return fetch(url, options);
+        }
+
+        // 1. AI Analytics Report (gemini-3-flash-preview)
+        async function generateAiAnalyticsReport() {
+            const spinner = document.getElementById('ai-modal-spinner');
+            const output = document.getElementById('ai-analytics-output');
+            spinner.classList.remove('hidden');
+            output.classList.add('hidden');
+
+            try {
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const summaryData = items.map(i => `- ${i.name} (${i.category}, 수량: ${i.qty}개, 폐기일: ${i.date}, 상태: ${i.status})`).join('\n');
+
+                const prompt = `
+                당신은 대한민국 편의점 매장 발주 및 폐기 관리 분석 전문가입니다.
+                다음은 매장의 최근 등록된 폐기 상품 데이터 목록입니다:
+                
+                ${summaryData || '등록된 상품 데이터 없음'}
+
+                위 데이터를 바탕으로 편의점 점장님을 위한 '폐기 손실 분석 & 발주 피드백 리포트'를 한글로 친절하고 명확하게 작성해주세요.
+                [구성 내용]:
+                1. 📊 폐기 발생 최다 카테고리 분석
+                2. ⚠️ 발주량 조절이 시급한 주의 상품 및 이유
+                3. 💡 매장 폐기 절감을 위한 실전 발주 및 진열 꿀팁 3가지
+                `;
+
+                const res = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await res.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "리포트를 생성할 수 없습니다.";
+
+                output.innerText = text;
+                output.classList.remove('hidden');
+            } catch (err) {
+                showToast('분석 리포트 생성 중 오류가 발생했습니다.', 'alert-circle', 'text-rose-400');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // 2. AI Marketing Copy & Recipes (gemini-3-flash-preview)
+        async function generateAiMarketingCopy() {
+            const spinner = document.getElementById('ai-modal-spinner');
+            const output = document.getElementById('ai-marketing-output');
+            spinner.classList.remove('hidden');
+            output.classList.add('hidden');
+
+            try {
+                const todayStr = formatDate(new Date());
+                const urgentItems = items.filter(i => i.date === todayStr && i.status === 'PENDING');
+                const itemListStr = urgentItems.length > 0 ? urgentItems.map(i => `${i.name} (${i.qty}개)`).join(', ') : '삼각김밥, 훈제란, 어묵 한그릇';
+
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const prompt = `
+                편의점 매장 마감할인 및 당근마켓/SNS 홍보 전문가로서 작성해주세요.
+                오늘 폐기 임박 상품: [ ${itemListStr} ]
+
+                1. [당근마켓 / 인스타그램용 매장 마감할인 홍보 문구] (재치있고 친근한 이모티콘 포함)
+                2. [오늘 임박 상품을 활용한 편의점 꿀조합 레시피 1가지 제안]
+                `;
+
+                const res = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                const data = await res.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "홍보글을 생성하지 못했습니다.";
+
+                output.innerText = text;
+                output.classList.remove('hidden');
+            } catch (err) {
+                showToast('홍보문 생성 중 오류가 발생했습니다.', 'alert-circle', 'text-rose-400');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // 3. AI Promotion Poster Image (gemini-3.1-flash-image)
+        async function generateAiPosterImage() {
+            const spinner = document.getElementById('ai-modal-spinner');
+            const output = document.getElementById('ai-poster-output');
+            const imgEl = document.getElementById('ai-generated-poster-img');
+            const downloadLink = document.getElementById('ai-poster-download-link');
+            const customPrompt = document.getElementById('ai-poster-prompt')?.value.trim();
+
+            spinner.classList.remove('hidden');
+            output.classList.add('hidden');
+
+            try {
+                const promptText = customPrompt || "A vibrant cute Korean convenience store clearance sale promotion poster with cartoon food characters, 50% discount label, highly readable text style";
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: {
+                        responseModalities: ['IMAGE'],
+                        imageConfig: { aspectRatio: "1:1" }
+                    }
+                };
+
+                const res = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const part = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+                if (part && part.inlineData) {
+                    const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                    imgEl.src = imageUrl;
+                    downloadLink.href = imageUrl;
+                    output.classList.remove('hidden');
+                    showToast('홍보 포스터가 생성되었습니다!', 'image', 'text-purple-400');
+                } else {
+                    showToast('포스터 이미지를 생성하지 못했습니다.', 'alert-circle', 'text-rose-400');
+                }
+            } catch (err) {
+                showToast('이미지 생성 중 오류가 발생했습니다.', 'alert-circle', 'text-rose-400');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // 4. AI Audio Briefing (gemini-2.5-flash-preview-tts)
+        async function generateAiAudioBriefing() {
+            const statusEl = document.getElementById('ai-tts-status');
+            const player = document.getElementById('ai-tts-player');
+            statusEl.classList.remove('hidden');
+            player.classList.add('hidden');
+
+            try {
+                const todayStr = formatDate(new Date());
+                const tomorrowStr = formatDate(getOffsetDate(1));
+
+                const todayCount = items.filter(i => i.date === todayStr && i.status === 'PENDING').length;
+                const tomorrowCount = items.filter(i => i.date === tomorrowStr && i.status === 'PENDING').length;
+
+                const textPrompt = `다정하고 명확한 편의점 매장 안내 음성으로 말해주세요: 안녕하세요! 오늘 폐기 대상 상품은 총 ${todayCount}건이며, 내일 폐기 예정 상품은 총 ${tomorrowCount}건입니다. 매장 근무자분께서는 유통기한 시각을 미리 확인하여 처리해 주시기 바랍니다. 오늘 하루도 화이팅입니다!`;
+
+                const apiKey = getApiKey();
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: textPrompt }] }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Kore" }
+                            }
+                        }
+                    }
+                };
+
+                const res = await fetchWithBackoff(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                const part = data?.candidates?.[0]?.content?.parts?.[0];
+                const base64Audio = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType || "";
+
+                if (base64Audio) {
+                    const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)?.[1] || "24000", 10);
+                    const pcmBuffer = base64ToArrayBuffer(base64Audio);
+                    const pcm16 = new Int16Array(pcmBuffer);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    player.src = audioUrl;
+                    player.classList.remove('hidden');
+                    player.play();
+                    showToast('음성 브리핑 재생이 시작되었습니다.', 'volume-2', 'text-indigo-400');
+                } else {
+                    showToast('음성 데이터를 생성할 수 없습니다.', 'alert-circle', 'text-rose-400');
+                }
+            } catch (err) {
+                showToast('음성 브리핑 생성 중 오류가 발생했습니다.', 'alert-circle', 'text-rose-400');
+            } finally {
+                statusEl.classList.add('hidden');
+            }
+        }
+
+        // PCM to WAV Audio Helper Functions
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
     </script>
 </body>
 </html>
