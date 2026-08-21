@@ -47,7 +47,7 @@
         button, input, select, label { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased overflow-x-hidden bg-slate-900 text-slate-100 pb-safe">
+<body class="h-full flex flex-col font-sans antialiased overflow-x-hidden bg-slate-900 text-slate-100 pb-28 sm:pb-safe">
 
     <!-- TOP HEADER -->
     <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3">
@@ -96,7 +96,7 @@
                 </button>
 
                 <!-- Register Item -->
-                <button onclick="openRegisterModal()" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs sm:text-sm">
+                <button onclick="openRegisterModal()" class="hidden sm:flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs sm:text-sm">
                     <i data-lucide="camera" class="w-4 h-4"></i>
                     <span>사진 등록</span>
                 </button>
@@ -104,44 +104,44 @@
         </div>
     </header>
 
-    <!-- MOBILE FLOATING ACTION BUTTON (FAB) FOR ONE-HAND SCAN -->
-    <button onclick="openRegisterModal()" aria-label="사진으로 등록" class="sm:hidden fixed bottom-6 right-5 z-40 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white p-4 rounded-full shadow-2xl shadow-indigo-500/50 active:scale-90 transition-all flex items-center justify-center border border-indigo-400/40">
-        <i data-lucide="camera" class="w-6 h-6"></i>
-        <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-400 border-2 border-slate-900"></span>
-        </span>
-    </button>
+    <!-- SMARTPHONE BOTTOM NAVIGATION BAR (ONE-HANDED TOUCH OPTIMIZED) -->
+    <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/80 px-2 py-1.5 pb-safe flex items-center justify-around shadow-2xl">
+        <!-- Home / All -->
+        <button onclick="filterByDate(null); setFilter('ALL');" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-indigo-400 active:scale-95 transition-all">
+            <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[10px] font-medium">달력/전체</span>
+        </button>
+
+        <!-- Urgent (Today/Tomorrow) -->
+        <button onclick="setFilter('URGENT')" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-amber-400 active:scale-95 transition-all">
+            <i data-lucide="alert-triangle" class="w-5 h-5 mb-0.5 text-amber-400"></i>
+            <span class="text-[10px] font-medium">오늘/내일</span>
+        </button>
+
+        <!-- Center Raised Scan Button -->
+        <button onclick="openRegisterModal()" aria-label="사진 촬영 등록" class="relative -top-4 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white p-3.5 rounded-full shadow-xl shadow-indigo-500/50 active:scale-90 transition-all border-2 border-indigo-400/50 flex flex-col items-center justify-center">
+            <i data-lucide="camera" class="w-6 h-6"></i>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-400 border-2 border-slate-900"></span>
+            </span>
+        </button>
+
+        <!-- AI Assistant -->
+        <button onclick="openAiModal()" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-purple-400 active:scale-95 transition-all">
+            <i data-lucide="sparkles" class="w-5 h-5 mb-0.5 text-purple-400"></i>
+            <span class="text-[10px] font-medium">AI 비서</span>
+        </button>
+
+        <!-- Print & Export -->
+        <button onclick="openPrintModal()" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+            <i data-lucide="printer" class="w-5 h-5 mb-0.5 text-cyan-400"></i>
+            <span class="text-[10px] font-medium">인쇄/출력</span>
+        </button>
+    </nav>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 pb-20 sm:pb-6">
-
-        <!-- Top Overview Stats Cards -->
-        <div class="lg:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
-                <div class="p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 shrink-0">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                </div>
-                <div>
-                    <p class="text-[11px] sm:text-xs text-slate-400">오늘 폐기 대상</p>
-                    <p class="text-xl sm:text-2xl font-bold text-red-400" id="stat-today-count">0건</p>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
-                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0">
-                    <i data-lucide="clock" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                </div>
-                <div>
-                    <p class="text-[11px] sm:text-xs text-slate-400">내일 폐기 예정</p>
-                    <p class="text-xl sm:text-2xl font-bold text-amber-400" id="stat-tomorrow-count">0건</p>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
-                <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 shrink-0">
-                    <i data-lucide="package" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                </div>
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                 <div>
                     <p class="text-[11px] sm:text-xs text-slate-400">전체 등록 상품</p>
                     <p class="text-xl sm:text-2xl font-bold text-indigo-300" id="stat-total-count">0건</p>
@@ -258,6 +258,7 @@
 
             <div class="p-6 overflow-y-auto custom-scrollbar space-y-5">
 
+                <!-- Auto Submit Toggle -->
                 <div class="flex items-center justify-between bg-indigo-950/50 border border-indigo-500/30 rounded-xl p-3">
                     <div class="flex items-center space-x-2">
                         <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
@@ -269,35 +270,159 @@
                     </label>
                 </div>
 
+                <!-- Camera / Upload Section -->
                 <div class="space-y-2">
                     <label class="block text-xs font-semibold text-slate-300">상품 포장지 또는 유통기한 라벨 촬영</label>
-                    <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[220px] flex flex-col items-center justify-center transition-all group">
+                    <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[200px] flex flex-col items-center justify-center transition-all group">
                         
                         <video id="webcam-video" autoplay playsinline class="hidden w-full h-56 object-cover"></video>
                         <canvas id="photo-canvas" class="hidden"></canvas>
                         <img id="image-preview" class="hidden w-full h-56 object-contain bg-black/40" />
 
                         <div id="upload-placeholder" class="text-center p-6 space-y-3">
-                    <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                        <i data-lucide="camera" class="w-6 h-6"></i>
+                            <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                                <i data-lucide="camera" class="w-6 h-6"></i>
+                            </div>
+                            <div class="text-xs text-slate-400">
+                                <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
+                                <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
+                            </div>
+                            <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+                                <button type="button" onclick="document.getElementById('smartphone-camera-input').click()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition-all">
+                                    <i data-lucide="camera" class="w-4 h-4"></i> 스마트폰 카메라 촬영
+                                </button>
+                                <input type="file" id="smartphone-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+                                
+                                <button type="button" onclick="startCamera()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl flex items-center gap-1.5 active:scale-95 transition-all">
+                                    <i data-lucide="video" class="w-3.5 h-3.5"></i> 웹캠 실시간
+                                </button>
+                                <label class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all">
+                                    <i data-lucide="image" class="w-3.5 h-3.5"></i> 갤러리 선택
+                                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Live Webcam Controls -->
+                        <div id="camera-controls" class="hidden absolute bottom-3 flex space-x-2">
+                            <button type="button" onclick="capturePhoto()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center gap-1">
+                                <i data-lucide="aperture" class="w-4 h-4"></i> 촬영하기
+                            </button>
+                            <button type="button" onclick="stopCamera()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl border border-slate-600">
+                                취소
+                            </button>
+                        </div>
                     </div>
-                    <div class="text-xs text-slate-400">
-                        <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
-                        <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
+                </div>
+
+                <!-- AI Loading Indicator -->
+                <div id="ai-loading" class="hidden bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3.5 flex items-center space-x-3 animate-pulse">
+                    <div class="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs font-semibold text-indigo-200">Gemini AI가 사진 속 상품명과 유통기한을 분석하는 중입니다...</span>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">상품명 <span class="text-red-400">*</span></label>
+                        <input type="text" id="input-name" required placeholder="예: 참치마요 삼각김밥" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                     </div>
-                    <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-                        <!-- Direct Smartphone Native Camera Trigger -->
-                        <button type="button" onclick="document.getElementById('smartphone-camera-input').click()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition-all">
-                            <i data-lucide="camera" class="w-4 h-4"></i> 스마트폰 카메라 촬영
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">폐기 일자 <span class="text-red-400">*</span></label>
+                            <input type="date" id="input-date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">폐기 시각</label>
+                            <input type="time" id="input-time" value="00:00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Preset Time Hotkeys -->
+                    <div class="flex items-center space-x-2 text-[11px]">
+                        <span class="text-slate-400 font-medium">시각 핫키:</span>
+                        <button type="button" onclick="setTimePreset('14:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-lg border border-slate-600 transition-colors">14:00 (주간FF)</button>
+                        <button type="button" onclick="setTimePreset('02:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-indigo-300 rounded-lg border border-slate-600 transition-colors">02:00 (야간FF)</button>
+                        <button type="button" onclick="setTimePreset('00:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-emerald-300 rounded-lg border border-slate-600 transition-colors">00:00 (일반)</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">카테고리</label>
+                            <select id="input-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                                <option value="도시락/김밥/샌드위치">도시락/김밥/샌드위치</option>
+                                <option value="유제품/음료">유제품/음료</option>
+                                <option value="신선식품/빵류">신선식품/빵류</option>
+                                <option value="안주/냉장가공" selected>안주/냉장가공</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">수량</label>
+                            <div class="flex items-center space-x-1">
+                                <div class="flex items-center flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2 py-1">
+                                    <button type="button" onclick="adjustInputQty(-1)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 font-bold text-xs">-</button>
+                                    <input type="number" id="input-qty" value="1" min="1" class="w-full bg-transparent text-center text-xs font-bold text-white focus:outline-none">
+                                    <button type="button" onclick="adjustInputQty(1)" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-slate-300 font-bold text-xs">+</button>
+                                </div>
+                                <button type="button" onclick="adjustInputQty(1)" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-[11px] font-medium">+1</button>
+                                <button type="button" onclick="adjustInputQty(5)" class="px-2 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-[11px] font-medium">+5</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-end space-x-2 border-t border-slate-700/80">
+                        <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700 transition-all">
+                            취소
                         </button>
-                        <input type="file" id="smartphone-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
-                        
-                        <button type="button" onclick="startCamera()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl flex items-center gap-1.5 active:scale-95 transition-all">
-                            <i data-lucide="video" class="w-3.5 h-3.5"></i> 웹캠 실시간
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4"></i> 상품 등록하기
                         </button>
-                        <label class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all">
-                            <i data-lucide="image" class="w-3.5 h-3.5"></i> 갤러리 선택
-                            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PRINT & EXPORT OPTION MODAL -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="printer" class="w-5 h-5 text-indigo-400"></i>
+                    편의점 폐기 점검표 인쇄 & HTML 내보내기
+                </h3>
+                <button onclick="closePrintModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                매장 카운터나 냉장고에 붙여둘 수 있는 <b>근무자용 폐기 점검표</b>를 A4 규격으로 바로 인쇄하거나 단독 HTML 파일로 저장합니다.
+            </p>
+
+            <div class="space-y-4 text-xs">
+                <!-- 1. Print Target Scope -->
+                <div>
+                    <label class="block font-semibold text-slate-200 mb-2">1. 출력 대상 범위 선택</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-target" value="TODAY" checked onchange="togglePrintMonthPicker()" class="accent-indigo-500">
+                            <span>오늘 폐기 항목만</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-target" value="SELECTED" onchange="togglePrintMonthPicker()" class="accent-indigo-500">
+                            <span>선택된 날짜 항목만</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-target" value="MONTH" onchange="togglePrintMonthPicker()" class="accent-indigo-500">
+                            <span>월별 항목 선택</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-target" value="ACTIVE" onchange="togglePrintMonthPicker()" class="accent-indigo-500">
+                            <span>미처리 항목 전체</span>
                         </label>
                     </div>
                 </div>
