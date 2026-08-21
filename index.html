@@ -61,9 +61,9 @@
             <!-- Action Buttons -->
             <div class="flex items-center space-x-1.5 sm:space-x-3">
                 <!-- PWA Install Button -->
-                <button id="pwa-install-btn" onclick="installPWA()" class="hidden flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-2.5 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95">
+                <button id="pwa-install-btn" onclick="installPWA()" class="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-2.5 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95">
                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span class="hidden sm:inline">앱 설치</span>
+                    <span>앱 설치 / 홈 화면 등록</span>
                 </button>
                 
                 <!-- Data Backup / Restore -->
@@ -414,65 +414,65 @@
                     <p class="text-xs text-slate-300 leading-relaxed">
                         오늘/내일 폐기 임박한 상품을 기반으로 <b>당근마켓/SNS 마감할인 홍보 문구</b>와 <b>편의점 꿀조합 레시피</b>를 자동으로 작성해 드립니다.
                     </p>
-                    <button onclick="generateAiMarketingCopy()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
-                        마감할인 홍보글 & 편의점 꿀조합 생성
-                    </button>
-                    <div id="ai-marketing-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
-                        <!-- AI Output Placeholder -->
-                    </div>
-                </div>
-
-                <!-- TAB 3: Image Poster Generator -->
-                <div id="ai-tab-poster" class="hidden space-y-4">
-                    <p class="text-xs text-slate-300 leading-relaxed">
-                        Gemini 3.1 Flash Image 모델을 사용하여 매장 내 출력용 또는 SNS 게시용 <b>마감할인 POP 홍보 이미지 포스터</b>를 생성합니다.
-                    </p>
-                    <div class="flex items-center space-x-2">
-                        <input type="text" id="ai-poster-prompt" placeholder="예: 참치마요 삼각김밥과 오뎅 50% 마감할인 귀여운 캐릭터 팝업 포스터" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
-                        <button onclick="generateAiPosterImage()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold text-xs transition-all shadow shrink-0 flex items-center gap-1.5">
-                            <i data-lucide="image" class="w-4 h-4"></i> 포스터 생성
-                        </button>
-                    </div>
-                    <div id="ai-poster-output" class="hidden text-center space-y-2 pt-2">
-                        <img id="ai-generated-poster-img" class="max-h-80 mx-auto rounded-xl border border-slate-700 shadow-xl object-contain bg-black/40" />
-                        <a id="ai-poster-download-link" download="마감할인_POP_포스터.png" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg border border-slate-600">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> 이미지 저장하기
-                        </a>
-                    </div>
-                </div>
-
-                <!-- TAB 4: TTS Spoken Briefing -->
-                <div id="ai-tab-tts" class="hidden space-y-4 text-center py-2">
-                    <div class="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto">
-                        <i data-lucide="volume-2" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white">Gemini 음성 폐기 안내 브리핑</h4>
-                        <p class="text-xs text-slate-400 mt-1">
-                            오늘과 내일의 폐기 상품 현황을 Gemini AI 성우 음성(Kore)으로 명확하게 읽어드립니다.
-                        </p>
-                    </div>
-                    <button onclick="generateAiAudioBriefing()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-all shadow inline-flex items-center gap-2">
-                        <i data-lucide="play" class="w-4 h-4 text-amber-300"></i>
-                        음성 브리핑 재생 시작
-                    </button>
-                    <div id="ai-tts-status" class="hidden text-xs text-indigo-300 font-medium animate-pulse">
-                        📢 음성 브리핑 생성 중... 잠시만 기다려 주세요.
-                    </div>
-                    <audio id="ai-tts-player" class="hidden w-full mt-2" controls></audio>
-                </div>
-
-                <!-- Common Loading Indicator -->
-                <div id="ai-modal-spinner" class="hidden bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center space-x-3 animate-pulse">
-                    <div class="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
-                    <div>
-                        <p class="text-xs font-bold text-indigo-300">Gemini AI 처리 중...</p>
-                        <p class="text-[11px] text-indigo-400/80">요청한 지능형 컨텐츠를 작성하고 있습니다.</p>
-                    </div>
-                </div>
-
+    <!-- MODAL: PWA SMARTPHONE INSTALL GUIDE -->
+    <div id="pwa-guide-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="smartphone" class="w-5 h-5 text-emerald-400"></i>
+                    스마트폰 홈 화면에 앱 등록
+                </h3>
+                <button onclick="closePwaGuideModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
+
+            <!-- Tab / OS Detector Header -->
+            <div id="pwa-os-detected-notice" class="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-200">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Steps for iOS Safari -->
+            <div id="pwa-ios-steps" class="space-y-3 text-xs text-slate-300">
+                <p class="font-semibold text-white">아이폰 (iOS Safari) 등록 방법:</p>
+                <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-700/80">
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <p>Safari 하단 중앙의 <b class="text-indigo-400">공유 버튼</b> (<i data-lucide="share" class="w-3.5 h-3.5 inline"></i>)을 터치합니다.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <p>메뉴 항목을 아래로 내려 <b class="text-emerald-400">'홈 화면에 추가'</b> (<i data-lucide="plus-square" class="w-3.5 h-3.5 inline"></i>)를 선택합니다.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <p>우측 상단 <b class="text-indigo-400">'추가'</b>를 누르면 바탕화면에 🏪 스마트폐기 앱 아이콘이 생성됩니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps for Android / Chrome -->
+            <div id="pwa-android-steps" class="space-y-3 text-xs text-slate-300">
+                <p class="font-semibold text-white">안드로이드 (크롬 / 삼성 인터넷) 등록 방법:</p>
+                <div class="space-y-2 bg-slate-900/80 p-3 rounded-xl border border-slate-700/80">
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                        <p>상단의 <b class="text-emerald-400">'앱 설치'</b> 버튼을 누르면 즉시 앱으로 다운로드됩니다.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                        <p>버튼이 안 보일 경우 브라우저 우측 상단 메뉴(<b class="text-slate-200">⋮</b>)를 터치합니다.</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                        <p><b class="text-emerald-400">'앱 설치'</b> 또는 <b class="text-emerald-400">'홈 화면에 추가'</b> 항목을 선택합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closePwaGuideModal()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all shadow">
+                확인했습니다
+            </button>
         </div>
     </div>
 
@@ -629,23 +629,42 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            const btn = document.getElementById('pwa-install-btn');
-            if (btn) btn.classList.remove('hidden');
         });
 
+        function isIos() {
+            return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+        }
+
+        function showPwaGuideModal() {
+            const modal = document.getElementById('pwa-guide-modal');
+            const noticeEl = document.getElementById('pwa-os-detected-notice');
+            if (!modal) return;
+
+            if (isIos()) {
+                if (noticeEl) noticeEl.innerHTML = `<i data-lucide="info" class="w-4 h-4 inline mr-1 text-indigo-400"></i> 아이폰(iOS Safari) 기기가 감지되었습니다. 아래 3단계를 따라 홈 화면에 추가해 보세요.`;
+            } else {
+                if (noticeEl) noticeEl.innerHTML = `<i data-lucide="info" class="w-4 h-4 inline mr-1 text-emerald-400"></i> 안드로이드/PC 브라우저가 감지되었습니다. 1초 만에 앱으로 설치할 수 있습니다.`;
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePwaGuideModal() {
+            document.getElementById('pwa-guide-modal').classList.add('hidden');
+        }
+
         async function installPWA() {
-            if (!deferredPrompt) {
-                showToast('Safari 등에서는 공유 메뉴의 "홈 화면에 추가"를 눌러주세요.', 'info', 'text-indigo-400');
-                return;
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('앱이 성공적으로 홈 화면에 설치되었습니다!', 'check-circle', 'text-emerald-400');
+                }
+                deferredPrompt = null;
+            } else {
+                showPwaGuideModal();
             }
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                showToast('앱이 성공적으로 설치되었습니다!', 'check-circle', 'text-emerald-400');
-            }
-            deferredPrompt = null;
-            const btn = document.getElementById('pwa-install-btn');
-            if (btn) btn.classList.add('hidden');
         }
 
         function loadItems() {
