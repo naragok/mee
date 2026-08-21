@@ -36,8 +36,16 @@
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Pretendard', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        input, select, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
 
@@ -50,54 +58,53 @@
 <body class="h-full flex flex-col font-sans antialiased overflow-x-hidden bg-slate-900 text-slate-100 pb-28 sm:pb-safe">
 
     <!-- TOP HEADER -->
-    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3">
+    <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-30 px-3 sm:px-4 py-2.5">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <!-- Clock Display -->
-            <div class="flex items-center space-x-2 text-xs font-semibold text-slate-300 bg-slate-900/60 px-3 py-2 rounded-xl border border-slate-700/50">
-                <i data-lucide="clock" class="w-4 h-4 text-indigo-400"></i>
-                <span id="current-time-display">불러오는 중...</span>
+            <!-- App Title & Clock -->
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-lg shadow-lg shadow-indigo-600/30">
+                    🏪
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-1.5">
+                        스마트 폐기 관리
+                    </h1>
+                    <div class="flex items-center space-x-1 text-[11px] text-indigo-300 font-medium">
+                        <i data-lucide="clock" class="w-3 h-3 text-indigo-400"></i>
+                        <span id="current-time-display">불러오는 중...</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center space-x-1.5 sm:space-x-3">
+            <!-- Action Buttons (Desktop & Mobile Combined) -->
+            <div class="flex items-center space-x-1.5 sm:space-x-2">
                 <!-- PWA Install Button -->
-                <button id="pwa-install-btn" onclick="installPWA()" class="flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-2.5 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95">
+                <button id="pwa-install-btn" onclick="installPWA()" class="flex items-center space-x-1 bg-emerald-600/90 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1.5 rounded-xl text-xs transition-all shadow-md active:scale-95 border border-emerald-500/50">
                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>앱 설치 / 홈 화면 등록</span>
+                    <span class="hidden sm:inline">앱 설치 / 홈 화면 등록</span>
+                    <span class="sm:hidden text-[11px]">앱 설치</span>
                 </button>
                 
                 <!-- Data Backup / Restore -->
-                <button onclick="exportDataJSON()" title="데이터 백업" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-2.5 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
+                <button onclick="exportDataJSON()" title="데이터 백업" class="p-2 sm:px-2.5 sm:py-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
                     <i data-lucide="database" class="w-3.5 h-3.5 text-cyan-400"></i>
-                    <span class="hidden sm:inline">백업</span>
+                    <span class="hidden sm:inline ml-1">백업</span>
                 </button>
-                <label title="데이터 복원" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-2.5 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm cursor-pointer">
+                <label title="데이터 복원" class="p-2 sm:px-2.5 sm:py-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm cursor-pointer">
                     <i data-lucide="folder-input" class="w-3.5 h-3.5 text-teal-400"></i>
-                    <span class="hidden sm:inline">복원</span>
+                    <span class="hidden sm:inline ml-1">복원</span>
                     <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="importDataJSON(event)">
                 </label>
 
-                <!-- Print & Export -->
-                <button onclick="openPrintModal()" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
-                    <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-400"></i>
-                    <span class="hidden sm:inline">인쇄 / 내보내기</span>
-                </button>
-
                 <!-- Gemini API Key -->
-                <button onclick="openApiKeyModal()" id="api-key-btn" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
+                <button onclick="openApiKeyModal()" id="api-key-btn" title="Gemini API 키 설정" class="p-2 sm:px-2.5 sm:py-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
                     <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
-                    <span class="hidden sm:inline">API 키</span>
+                    <span class="hidden sm:inline ml-1">API 키</span>
                 </button>
 
-                <!-- AI Assistant Trigger -->
-                <button onclick="openAiModal()" class="flex items-center space-x-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium px-3 py-2 rounded-xl shadow-lg shadow-purple-600/30 transition-all active:scale-95 text-xs sm:text-sm">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
-                    <span>AI 비서</span>
-                </button>
-
-                <!-- Register Item -->
-                <button onclick="openRegisterModal()" class="hidden sm:flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs sm:text-sm">
-                    <i data-lucide="camera" class="w-4 h-4"></i>
+                <!-- Register Item (Desktop Header) -->
+                <button onclick="openRegisterModal()" class="hidden sm:flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs">
+                    <i data-lucide="camera" class="w-3.5 h-3.5"></i>
                     <span>사진 등록</span>
                 </button>
             </div>
@@ -107,147 +114,177 @@
     <!-- SMARTPHONE BOTTOM NAVIGATION BAR (ONE-HANDED TOUCH OPTIMIZED) -->
     <nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-700/80 px-2 py-1.5 pb-safe flex items-center justify-around shadow-2xl">
         <!-- Home / All -->
-        <button onclick="filterByDate(null); setFilter('ALL');" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-indigo-400 active:scale-95 transition-all">
+        <button onclick="filterByDate(null); setFilter('ALL');" class="flex flex-col items-center justify-center p-1 text-slate-400 hover:text-indigo-400 active:scale-95 transition-all">
             <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
             <span class="text-[10px] font-medium">달력/전체</span>
         </button>
 
         <!-- Urgent (Today/Tomorrow) -->
-        <button onclick="setFilter('URGENT')" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-amber-400 active:scale-95 transition-all">
+        <button onclick="setFilter('URGENT')" class="flex flex-col items-center justify-center p-1 text-slate-400 hover:text-amber-400 active:scale-95 transition-all">
             <i data-lucide="alert-triangle" class="w-5 h-5 mb-0.5 text-amber-400"></i>
             <span class="text-[10px] font-medium">오늘/내일</span>
         </button>
 
-        <!-- Center Raised Scan Button -->
-        <button onclick="openRegisterModal()" aria-label="사진 촬영 등록" class="relative -top-4 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white p-3.5 rounded-full shadow-xl shadow-indigo-500/50 active:scale-90 transition-all border-2 border-indigo-400/50 flex flex-col items-center justify-center">
+        <!-- Center Raised Primary Scan Button -->
+        <button onclick="openRegisterModal()" aria-label="사진 촬영 등록" class="relative -top-3.5 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white p-3.5 rounded-full shadow-2xl shadow-indigo-500/50 active:scale-90 transition-all border-2 border-indigo-300/40 flex flex-col items-center justify-center">
             <i data-lucide="camera" class="w-6 h-6"></i>
-            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-400 border-2 border-slate-900"></span>
+              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-400 border-2 border-slate-900"></span>
             </span>
         </button>
 
         <!-- AI Assistant -->
-        <button onclick="openAiModal()" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-purple-400 active:scale-95 transition-all">
+        <button onclick="openAiModal()" class="flex flex-col items-center justify-center p-1 text-slate-400 hover:text-purple-400 active:scale-95 transition-all">
             <i data-lucide="sparkles" class="w-5 h-5 mb-0.5 text-purple-400"></i>
             <span class="text-[10px] font-medium">AI 비서</span>
         </button>
 
         <!-- Print & Export -->
-        <button onclick="openPrintModal()" class="flex flex-col items-center justify-center p-1.5 text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
+        <button onclick="openPrintModal()" class="flex flex-col items-center justify-center p-1 text-slate-400 hover:text-cyan-400 active:scale-95 transition-all">
             <i data-lucide="printer" class="w-5 h-5 mb-0.5 text-cyan-400"></i>
             <span class="text-[10px] font-medium">인쇄/출력</span>
         </button>
     </nav>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-3.5 sm:space-y-4">
+        
+        <!-- DASHBOARD STATS -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
+                <div class="p-2 sm:p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 shrink-0">
+                    <i data-lucide="alert-circle" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
                 <div>
-                    <p class="text-[11px] sm:text-xs text-slate-400">전체 등록 상품</p>
-                    <p class="text-xl sm:text-2xl font-bold text-indigo-300" id="stat-total-count">0건</p>
+                    <p class="text-[11px] sm:text-xs text-slate-400 font-medium">오늘 폐기 대상</p>
+                    <p class="text-lg sm:text-2xl font-bold text-red-400" id="stat-today-count">0건</p>
                 </div>
             </div>
 
-            <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
-                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
+                <div class="p-2 sm:p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0">
+                    <i data-lucide="clock" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] sm:text-xs text-slate-400 font-medium">내일 폐기 예정</p>
+                    <p class="text-lg sm:text-2xl font-bold text-amber-400" id="stat-tomorrow-count">0건</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
+                <div class="p-2 sm:p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20 shrink-0">
+                    <i data-lucide="package" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] sm:text-xs text-slate-400 font-medium">전체 등록 상품</p>
+                    <p class="text-lg sm:text-2xl font-bold text-indigo-300" id="stat-total-count">0건</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3 sm:p-4 flex items-center space-x-3 shadow-sm">
+                <div class="p-2 sm:p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 shrink-0">
                     <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                 </div>
                 <div>
-                    <p class="text-[11px] sm:text-xs text-slate-400">이번 달 처리 완료</p>
-                    <p class="text-xl sm:text-2xl font-bold text-emerald-400" id="stat-disposed-count">0건</p>
+                    <p class="text-[11px] sm:text-xs text-slate-400 font-medium">이번 달 처리 완료</p>
+                    <p class="text-lg sm:text-2xl font-bold text-emerald-400" id="stat-disposed-count">0건</p>
                 </div>
             </div>
         </div>
 
-        <!-- LEFT COLUMN: Calendar View -->
-        <section class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center space-x-3">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
-                        <span id="calendar-month-year">2026년 8월</span>
-                    </h2>
-                    <button onclick="goToToday()" class="text-xs px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors">
-                        오늘
+        <!-- TWO COLUMN LAYOUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            <!-- LEFT COLUMN: Calendar View -->
+            <section class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 sm:p-5 flex flex-col shadow-xl">
+                <div class="flex items-center justify-between mb-3.5">
+                    <div class="flex items-center space-x-2.5">
+                        <h2 class="text-base sm:text-xl font-bold text-white flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
+                            <span id="calendar-month-year">불러오는 중...</span>
+                        </h2>
+                        <button onclick="goToToday()" class="text-xs px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors border border-slate-600/60">
+                            오늘
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button onclick="changeMonth(-1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="changeMonth(1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center font-semibold text-[11px] sm:text-xs text-slate-400 mb-2">
+                    <div class="text-red-400">일</div>
+                    <div>월</div>
+                    <div>화</div>
+                    <div>수</div>
+                    <div>목</div>
+                    <div>금</div>
+                    <div class="text-indigo-400">토</div>
+                </div>
+
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-1.5 flex-1 min-h-[300px] sm:min-h-[340px]">
+                    <!-- Populated via JavaScript -->
+                </div>
+
+                <div class="flex items-center justify-end space-x-3.5 mt-3 pt-2.5 border-t border-slate-700/50 text-[11px] sm:text-xs text-slate-400">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 오늘 폐기</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 내일 폐기</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 정상/여유</span>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Product List & Filters -->
+            <section class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-3.5 sm:p-5 flex flex-col shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2" id="selected-date-title">
+                            전체 폐기 관리 목록
+                        </h3>
+                        <p class="text-[11px] sm:text-xs text-slate-400" id="selected-date-subtitle">날짜를 클릭하면 해당 날짜 상품을 골라볼 수 있습니다.</p>
+                    </div>
+                    <button id="reset-date-filter" onclick="filterByDate(null)" class="hidden text-xs text-indigo-400 hover:text-indigo-300 underline font-medium">
+                        전체보기
                     </button>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="changeMonth(-1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </button>
-                    <button onclick="changeMonth(1)" class="p-2 bg-slate-700/60 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
+
+                <div class="flex items-center space-x-2 mb-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        <input type="text" id="search-input" oninput="renderList()" placeholder="상품명/카테고리 검색..." class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <select id="sort-select" onchange="renderList()" class="bg-slate-900/80 border border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
+                        <option value="EXPIRY_ASC">유통기한 임박순</option>
+                        <option value="EXPIRY_DESC">유통기한 느린순</option>
+                        <option value="NEWEST">최근 등록순</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2">
-                <div class="text-red-400">일</div>
-                <div>월</div>
-                <div>화</div>
-                <div>수</div>
-                <div>목</div>
-                <div>금</div>
-                <div class="text-indigo-400">토</div>
-            </div>
-
-            <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 min-h-[360px]">
-                <!-- Populated via JavaScript -->
-            </div>
-
-            <div class="flex items-center justify-end space-x-4 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-400">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 오늘 폐기</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 내일 폐기</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 정상/여유</span>
-            </div>
-        </section>
-
-        <!-- RIGHT COLUMN: Product List & Filters -->
-        <section class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
-            <div class="flex items-center justify-between mb-3">
-                <div>
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2" id="selected-date-title">
-                        전체 폐기 관리 목록
-                    </h3>
-                    <p class="text-xs text-slate-400" id="selected-date-subtitle">날짜를 클릭하면 해당 날짜 상품을 골라볼 수 있습니다.</p>
+                <div class="flex space-x-1 p-1 bg-slate-900/60 rounded-xl mb-3 border border-slate-700/40 text-[11px] sm:text-xs">
+                    <button onclick="setFilter('ALL')" id="filter-btn-ALL" class="flex-1 py-1.5 font-medium rounded-lg bg-indigo-600 text-white transition-all shadow">전체</button>
+                    <button onclick="setFilter('URGENT')" id="filter-btn-URGENT" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">오늘/내일</button>
+                    <button onclick="setFilter('ACTIVE')" id="filter-btn-ACTIVE" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">미처리</button>
+                    <button onclick="setFilter('DISPOSED')" id="filter-btn-DISPOSED" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">완료됨</button>
                 </div>
-                <button id="reset-date-filter" onclick="filterByDate(null)" class="hidden text-xs text-indigo-400 hover:text-indigo-300 underline">
-                    전체보기
-                </button>
-            </div>
 
-            <div class="flex items-center space-x-2 mb-3">
-                <div class="relative flex-1">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                    <input type="text" id="search-input" oninput="renderList()" placeholder="상품명 또는 카테고리 검색..." class="w-full bg-slate-900/80 border border-slate-700/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                <div id="product-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 max-h-[420px] sm:max-h-[460px]">
+                    <!-- Populated via JavaScript -->
                 </div>
-                <select id="sort-select" onchange="renderList()" class="bg-slate-900/80 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-indigo-500">
-                    <option value="EXPIRY_ASC">유통기한 임박순</option>
-                    <option value="EXPIRY_DESC">유통기한 느린순</option>
-                    <option value="NEWEST">최근 등록순</option>
-                </select>
-            </div>
-
-            <div class="flex space-x-1 p-1 bg-slate-900/60 rounded-xl mb-4 border border-slate-700/40 text-xs">
-                <button onclick="setFilter('ALL')" id="filter-btn-ALL" class="flex-1 py-1.5 font-medium rounded-lg bg-indigo-600 text-white transition-all shadow">전체</button>
-                <button onclick="setFilter('URGENT')" id="filter-btn-URGENT" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">오늘/내일</button>
-                <button onclick="setFilter('ACTIVE')" id="filter-btn-ACTIVE" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">미처리</button>
-                <button onclick="setFilter('DISPOSED')" id="filter-btn-DISPOSED" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">완료됨</button>
-            </div>
-
-            <div id="product-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 max-h-[460px]">
-                <!-- Populated via JavaScript -->
-            </div>
-        </section>
+            </section>
+        </div>
 
     </main>
 
     <!-- MODAL 1: CAMERA / PHOTO REGISTRATION -->
-    <div id="register-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
+    <div id="register-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-2.5 sm:p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
             
-            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <div class="px-4 py-3.5 sm:px-5 border-b border-slate-700 flex items-center justify-between bg-slate-800">
+                <h3 class="text-sm sm:text-lg font-bold text-white flex items-center gap-2">
                     <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400"></i>
                     사진으로 폐기 상품 등록 (AI 자동인식)
                 </h3>
@@ -256,9 +293,9 @@
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto custom-scrollbar space-y-5">
+            <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar space-y-3.5">
 
-                <!-- Auto Submit Toggle -->
+                <!-- One-Touch Auto Submit Toggle -->
                 <div class="flex items-center justify-between bg-indigo-950/50 border border-indigo-500/30 rounded-xl p-3">
                     <div class="flex items-center space-x-2">
                         <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
@@ -273,23 +310,25 @@
                 <!-- Camera / Upload Section -->
                 <div class="space-y-2">
                     <label class="block text-xs font-semibold text-slate-300">상품 포장지 또는 유통기한 라벨 촬영</label>
-                    <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[200px] flex flex-col items-center justify-center transition-all group">
+                    <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[180px] flex flex-col items-center justify-center transition-all group">
                         
-                        <video id="webcam-video" autoplay playsinline class="hidden w-full h-56 object-cover"></video>
+                        <video id="webcam-video" autoplay playsinline class="hidden w-full h-48 sm:h-56 object-cover"></video>
                         <canvas id="photo-canvas" class="hidden"></canvas>
-                        <img id="image-preview" class="hidden w-full h-56 object-contain bg-black/40" />
+                        <img id="image-preview" class="hidden w-full h-48 sm:h-56 object-contain bg-black/40" />
 
-                        <div id="upload-placeholder" class="text-center p-6 space-y-3">
-                            <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                                <i data-lucide="camera" class="w-6 h-6"></i>
+                        <div id="upload-placeholder" class="text-center p-4 sm:p-5 space-y-2.5">
+                            <div class="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                                <i data-lucide="camera" class="w-5 h-5"></i>
                             </div>
                             <div class="text-xs text-slate-400">
-                                <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
+                                <p class="font-medium text-slate-200">스마트폰 카메라로 찍거나 사진 파일 선택</p>
                                 <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
                             </div>
-                            <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-                                <button type="button" onclick="document.getElementById('smartphone-camera-input').click()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition-all">
-                                    <i data-lucide="camera" class="w-4 h-4"></i> 스마트폰 카메라 촬영
+                            
+                            <!-- Smartphone Touch Action Triggers -->
+                            <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+                                <button type="button" onclick="document.getElementById('smartphone-camera-input').click()" class="px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition-all">
+                                    <i data-lucide="camera" class="w-4 h-4"></i> 스마트폰 카메라 바로 촬영
                                 </button>
                                 <input type="file" id="smartphone-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
                                 
@@ -316,19 +355,19 @@
                 </div>
 
                 <!-- AI Loading Indicator -->
-                <div id="ai-loading" class="hidden bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3.5 flex items-center space-x-3 animate-pulse">
-                    <div class="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                <div id="ai-loading" class="hidden bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3 flex items-center space-x-3 animate-pulse">
+                    <div class="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
                     <span class="text-xs font-semibold text-indigo-200">Gemini AI가 사진 속 상품명과 유통기한을 분석하는 중입니다...</span>
                 </div>
 
                 <!-- Registration Form -->
-                <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-300 mb-1">상품명 <span class="text-red-400">*</span></label>
                         <input type="text" id="input-name" required placeholder="예: 참치마요 삼각김밥" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">폐기 일자 <span class="text-red-400">*</span></label>
                             <input type="date" id="input-date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
@@ -340,14 +379,14 @@
                     </div>
 
                     <!-- Preset Time Hotkeys -->
-                    <div class="flex items-center space-x-2 text-[11px]">
-                        <span class="text-slate-400 font-medium">시각 핫키:</span>
-                        <button type="button" onclick="setTimePreset('14:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-lg border border-slate-600 transition-colors">14:00 (주간FF)</button>
-                        <button type="button" onclick="setTimePreset('02:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-indigo-300 rounded-lg border border-slate-600 transition-colors">02:00 (야간FF)</button>
-                        <button type="button" onclick="setTimePreset('00:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-emerald-300 rounded-lg border border-slate-600 transition-colors">00:00 (일반)</button>
+                    <div class="flex items-center space-x-1.5 text-[11px] overflow-x-auto py-0.5">
+                        <span class="text-slate-400 font-medium shrink-0">시각 핫키:</span>
+                        <button type="button" onclick="setTimePreset('14:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-amber-300 rounded-lg border border-slate-600 transition-colors shrink-0">14:00 (주간FF)</button>
+                        <button type="button" onclick="setTimePreset('02:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-indigo-300 rounded-lg border border-slate-600 transition-colors shrink-0">02:00 (야간FF)</button>
+                        <button type="button" onclick="setTimePreset('00:00')" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-emerald-300 rounded-lg border border-slate-600 transition-colors shrink-0">00:00 (자정)</button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-2.5">
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">카테고리</label>
                             <select id="input-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
@@ -373,10 +412,10 @@
                     </div>
 
                     <div class="pt-2 flex items-center justify-end space-x-2 border-t border-slate-700/80">
-                        <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700 transition-all">
+                        <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700 transition-all">
                             취소
                         </button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-1.5">
+                        <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-1.5">
                             <i data-lucide="check" class="w-4 h-4"></i> 상품 등록하기
                         </button>
                     </div>
@@ -387,8 +426,8 @@
     </div>
 
     <!-- MODAL 2: PRINT & EXPORT OPTION MODAL -->
-    <div id="print-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in duration-200">
+    <div id="print-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
             <div class="flex items-center justify-between border-b border-slate-700 pb-3">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                     <i data-lucide="printer" class="w-5 h-5 text-indigo-400"></i>
@@ -427,7 +466,7 @@
                     </div>
                 </div>
 
-                <!-- Month Picker (Shown when MONTH radio is checked) -->
+                <!-- Month Picker -->
                 <div id="print-month-container" class="hidden bg-indigo-950/40 border-2 border-indigo-500/80 rounded-xl p-3.5 space-y-2.5 transition-all">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-indigo-200 flex items-center gap-1.5">
@@ -475,7 +514,7 @@
                 </button>
                 <div class="flex space-x-2">
                     <button type="button" onclick="downloadPrintableHtml()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium border border-slate-600 flex items-center gap-1.5 shadow">
-                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> HTML 파일 저장
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> HTML 저장
                     </button>
                     <button type="button" onclick="executeDirectPrint()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow flex items-center gap-1.5">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i> 바로 인쇄하기
@@ -485,11 +524,60 @@
         </div>
     </div>
 
+    <!-- MODAL 3: GEMINI API KEY SETUP MODAL -->
+    <div id="apikey-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-amber-400"></i>
+                    Gemini API 키 설정 (무료 사용)
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                개인 <b>Google Gemini API 키</b>를 등록하시면 AI 비서 및 사진 OCR 분석 기능을 무료로 자유롭게 이용할 수 있습니다.
+            </p>
+
+            <div class="bg-slate-900/80 border border-slate-700 rounded-xl p-3 text-xs space-y-1.5">
+                <p class="font-semibold text-amber-300 flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> 무료 API 키 발급 방법:
+                </p>
+                <p class="text-slate-400">1. Google AI Studio 웹사이트에 접속합니다.</p>
+                <p class="text-slate-400">2. 'Get API key' ➔ 'Create API key' 버튼을 클릭합니다.</p>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-semibold underline mt-1">
+                    Google AI Studio에서 키 발급받기 <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
+                <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-700">
+                <button type="button" onclick="clearApiKey()" class="px-3 py-2 text-rose-400 hover:text-rose-300 text-xs font-medium">
+                    키 초기화
+                </button>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="closeApiKeyModal()" class="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700">
+                        취소
+                    </button>
+                    <button type="button" onclick="saveApiKey()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow">
+                        저장하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL 4: AI GEMINI HUB MODAL -->
-    <div id="ai-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div id="ai-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <div class="px-5 py-3.5 sm:px-6 border-b border-slate-700 flex items-center justify-between bg-slate-800">
+                <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                     <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
                     Gemini AI 스마트 매장 비서
                 </h3>
@@ -518,7 +606,7 @@
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+            <div class="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
                 
                 <!-- TAB 1: Analytics Report -->
                 <div id="ai-tab-analytics" class="space-y-4">
@@ -527,7 +615,7 @@
                     </p>
                     <button onclick="generateAiAnalyticsReport()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
                         <i data-lucide="bot" class="w-4 h-4 text-amber-300"></i>
-                        AI 폐기 분석 & 발주 피드백 분석 리포트 생성
+                        AI 폐기 분석 & 발주 피드백 리포트 생성
                     </button>
                     <div id="ai-analytics-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
                         <!-- AI Output Placeholder -->
@@ -539,9 +627,65 @@
                     <p class="text-xs text-slate-300 leading-relaxed">
                         오늘/내일 폐기 임박한 상품을 기반으로 <b>당근마켓/SNS 마감할인 홍보 문구</b>와 <b>편의점 꿀조합 레시피</b>를 자동으로 작성해 드립니다.
                     </p>
-    <!-- MODAL: PWA SMARTPHONE INSTALL GUIDE -->
+                    <button onclick="generateAiMarketingCopy()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                        마감할인 홍보 문구 & 꿀조합 제안 생성
+                    </button>
+                    <div id="ai-marketing-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
+                        <!-- AI Output Placeholder -->
+                    </div>
+                </div>
+
+                <!-- TAB 3: Poster Generator -->
+                <div id="ai-tab-poster" class="hidden space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Gemini 이미지 생성 AI를 통해 <b>매장용 마감할인 / 폐기 상품 세일 홍보 포스터</b>를 일러스트 디자인으로 자동 생성합니다.
+                    </p>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">포스터 스타일 / 프롬프트 입력 (선택사항)</label>
+                        <input type="text" id="ai-poster-prompt" placeholder="예: 귀여운 삼각김밥과 음료수가 50% 세일하는 편의점 할인 이벤트 포스터" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <button onclick="generateAiPosterImage()" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        AI 홍보 포스터 이미지 생성하기
+                    </button>
+                    <div id="ai-poster-output" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-4 text-center space-y-3">
+                        <img id="ai-generated-poster-img" class="w-60 h-60 object-cover mx-auto rounded-xl shadow-lg border border-slate-700" />
+                        <a id="ai-poster-download-link" download="편의점_마감할인_포스터.png" class="inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> 포스터 고화질 다운로드
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TAB 4: TTS Spoken Briefing -->
+                <div id="ai-tab-tts" class="hidden space-y-4">
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        근무 시작 시 매장 폐기 현황을 <b>Gemini 음성 아나운서</b>가 다정한 한국어로 들려줍니다.
+                    </p>
+                    <button onclick="generateAiAudioBriefing()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-all shadow flex items-center justify-center gap-2">
+                        <i data-lucide="volume-2" class="w-4 h-4 text-emerald-200"></i>
+                        음성 폐기 브리핑 생성 및 재생
+                    </button>
+                    <div id="ai-tts-status" class="hidden bg-slate-900 border border-slate-700/80 rounded-xl p-3 text-xs text-emerald-400 flex items-center justify-center space-x-2">
+                        <div class="w-3 h-3 bg-emerald-400 rounded-full animate-ping"></div>
+                        <span>Gemini AI 음성을 생성하고 있습니다...</span>
+                    </div>
+                    <audio id="ai-tts-player" controls class="hidden w-full mt-2"></audio>
+                </div>
+
+                <!-- Shared Spinner -->
+                <div id="ai-modal-spinner" class="hidden text-center py-6">
+                    <div class="w-8 h-8 border-3 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <p class="text-xs text-indigo-300 font-medium">Gemini AI가 답변을 작성 중입니다...</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: PWA SMARTPHONE INSTALL GUIDE -->
     <div id="pwa-guide-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 animate-in fade-in duration-200">
             <div class="flex items-center justify-between border-b border-slate-700 pb-3">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                     <i data-lucide="smartphone" class="w-5 h-5 text-emerald-400"></i>
@@ -552,7 +696,7 @@
                 </button>
             </div>
 
-            <!-- Tab / OS Detector Header -->
+            <!-- Tab / OS Detector Notice -->
             <div id="pwa-os-detected-notice" class="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-200">
                 <!-- Populated via JS -->
             </div>
@@ -616,16 +760,6 @@
         let currentTabFilter = 'ALL';
         let mediaStream = null;
         let currentCapturedBase64 = null;
-
-        // Sample initial items based on CVS real product photos
-        const initialSampleData = [
-            { id: '1', name: 'CJ 훈제대란', date: '2026-08-07', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
-            { id: '2', name: '행복담기 동의 구운란', date: '2026-08-19', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
-            { id: '3', name: '삼호어묵 시원한 오뎅 한그릇', date: '2026-08-17', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
-            { id: '4', name: '동원 스위트 한스틱 어묵', date: '2026-08-01', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'DISPOSED', image: null },
-            { id: '5', name: '행복담기 동의 훈제란', date: '2026-07-12', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'DISPOSED', image: null },
-            { id: '6', name: '피존 시그니처 미스틱 레인', date: '2024-02-24', time: '00:00', category: '기타', qty: 1, status: 'DISPOSED', image: null }
-        ];
 
         function formatDate(d) {
             const year = d.getFullYear();
@@ -740,7 +874,7 @@
 
             if ('serviceWorker' in navigator) {
                 const swCode = `
-                    const CACHE_NAME = 'cvs-disposal-pwa-v2';
+                    const CACHE_NAME = 'cvs-disposal-pwa-v3';
                     self.addEventListener('install', (e) => self.skipWaiting());
                     self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
                     self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
@@ -768,7 +902,7 @@
             if (isIos()) {
                 if (noticeEl) noticeEl.innerHTML = `<i data-lucide="info" class="w-4 h-4 inline mr-1 text-indigo-400"></i> 아이폰(iOS Safari) 기기가 감지되었습니다. 아래 3단계를 따라 홈 화면에 추가해 보세요.`;
             } else {
-                if (noticeEl) noticeEl.innerHTML = `<i data-lucide="info" class="w-4 h-4 inline mr-1 text-emerald-400"></i> 안드로이드/PC 브라우저가 감지되었습니다. 1초 만에 앱으로 설치할 수 있습니다.`;
+                if (noticeEl) noticeEl.innerHTML = `<i data-lucide="info" class="w-4 h-4 inline mr-1 text-emerald-400"></i> 안드로이드/PC 브라우저가 감지되었습니다. 버튼 터치 한 번으로 스마트폰에 앱을 설치하세요.`;
             }
 
             modal.classList.remove('hidden');
@@ -795,9 +929,10 @@
         function loadItems() {
             const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (stored) {
-                try { items = JSON.parse(stored); } catch(e) { items = initialSampleData; }
+                try { items = JSON.parse(stored); } catch(e) { items = []; }
             } else {
-                items = initialSampleData;
+                // CLEAN DEPLOYMENT STATE: Starts with an empty items list
+                items = [];
                 saveItems();
             }
         }
@@ -828,7 +963,7 @@
             for (let i = firstDay - 1; i >= 0; i--) {
                 const dayNum = prevMonthLastDate - i;
                 const cell = document.createElement('div');
-                cell.className = "bg-slate-900/30 border border-slate-800/40 rounded-xl p-1.5 opacity-30 text-xs min-h-[52px]";
+                cell.className = "bg-slate-900/30 border border-slate-800/40 rounded-xl p-1 opacity-30 text-xs min-h-[48px]";
                 cell.innerText = dayNum;
                 grid.appendChild(cell);
             }
@@ -844,7 +979,7 @@
                 const cell = document.createElement('div');
                 cell.onclick = () => filterByDate(dayStr);
                 
-                let cellClasses = "relative bg-slate-800/80 hover:bg-slate-700/80 border rounded-xl p-1.5 flex flex-col justify-between cursor-pointer transition-all min-h-[52px] group ";
+                let cellClasses = "relative bg-slate-800/80 hover:bg-slate-700/80 border rounded-xl p-1 sm:p-1.5 flex flex-col justify-between cursor-pointer transition-all min-h-[48px] sm:min-h-[52px] group ";
                 if (isSelected) cellClasses += "border-indigo-500 ring-2 ring-indigo-500/40 bg-indigo-950/20 ";
                 else if (isToday) cellClasses += "border-emerald-500/80 bg-emerald-950/10 ";
                 else cellClasses += "border-slate-700/50 ";
@@ -858,16 +993,16 @@
 
                 let contentHtml = `
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold ${isToday ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${day}</span>
-                        ${isToday ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 rounded font-bold">오늘</span>' : ''}
+                        <span class="text-[11px] sm:text-xs font-semibold ${isToday ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${day}</span>
+                        ${isToday ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1 rounded font-bold">오늘</span>' : ''}
                     </div>
                 `;
 
                 if (dayItems.length > 0) {
                     contentHtml += `
-                        <div class="mt-1 flex items-center justify-between gap-1">
-                            <span class="${badgeColor} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full w-full text-center truncate shadow">
-                                ${dayItems.length}개 폐기
+                        <div class="mt-0.5 flex items-center justify-between gap-1">
+                            <span class="${badgeColor} text-white text-[9px] sm:text-[10px] font-bold px-1 py-0.5 rounded-full w-full text-center truncate shadow">
+                                ${dayItems.length}개
                             </span>
                         </div>
                     `;
@@ -971,9 +1106,10 @@
 
             if (filtered.length === 0) {
                 listEl.innerHTML = `
-                    <div class="text-center py-12 text-slate-500 space-y-2">
+                    <div class="text-center py-10 text-slate-500 space-y-2">
                         <i data-lucide="inbox" class="w-10 h-10 mx-auto text-slate-600"></i>
-                        <p class="text-sm">등록되었거나 조건에 맞는 상품이 없습니다.</p>
+                        <p class="text-xs sm:text-sm font-medium">등록되었거나 조건에 맞는 폐기 상품이 없습니다.</p>
+                        <p class="text-[11px] text-slate-600">하단 [카메라 촬영] 버튼을 눌러 폐기 상품을 손쉽게 추가해 보세요.</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -1003,8 +1139,8 @@
                 }
 
                 return `
-                    <div class="bg-slate-900/80 border ${isToday && !isDisposed ? 'border-red-500/50' : 'border-slate-700/60'} rounded-xl p-3 flex items-center justify-between gap-3 hover:border-slate-600 transition-all">
-                        <div class="flex items-center space-x-3 overflow-hidden">
+                    <div class="bg-slate-900/80 border ${isToday && !isDisposed ? 'border-red-500/50' : 'border-slate-700/60'} rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-2.5 hover:border-slate-600 transition-all">
+                        <div class="flex items-center space-x-2.5 overflow-hidden">
                             ${item.image ? 
                                 `<img src="${item.image}" class="w-11 h-11 rounded-lg object-cover bg-slate-800 border border-slate-700 shrink-0" />` : 
                                 `<div class="w-11 h-11 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-slate-400">
@@ -1012,17 +1148,17 @@
                                  </div>`
                             }
                             <div class="truncate">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5">
                                     <h4 class="text-xs sm:text-sm font-semibold text-white truncate ${isDisposed ? 'line-through text-slate-500' : ''}">${escapeHtml(item.name)}</h4>
-                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">${item.category}</span>
+                                    <span class="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">${item.category}</span>
                                 </div>
-                                <div class="flex items-center space-x-2 text-xs mt-1">
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-medium ${badgeColorClass}">
+                                <div class="flex items-center space-x-1.5 text-xs mt-1">
+                                    <span class="px-1.5 py-0.5 rounded-md text-[10px] sm:text-[11px] font-medium ${badgeColorClass}">
                                         ${badgeText}
                                     </span>
                                     <div class="flex items-center space-x-1 bg-slate-800/80 border border-slate-700/80 rounded-lg px-1.5 py-0.5">
                                         <button onclick="changeQty('${item.id}', -1)" title="수량 감소" class="w-4 h-4 rounded hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs active:scale-95 transition-all">-</button>
-                                        <span class="text-[11px] font-semibold text-indigo-300 px-1">${item.qty}개</span>
+                                        <span class="text-[11px] font-semibold text-indigo-300 px-0.5">${item.qty}개</span>
                                         <button onclick="changeQty('${item.id}', 1)" title="수량 증가" class="w-4 h-4 rounded hover:bg-slate-700 flex items-center justify-center text-slate-300 font-bold text-xs active:scale-95 transition-all">+</button>
                                     </div>
                                 </div>
@@ -1031,15 +1167,15 @@
 
                         <div class="flex items-center space-x-1 shrink-0">
                             ${!isDisposed ? `
-                                <button onclick="markAsDisposed('${item.id}')" title="폐기 완료 처리" class="p-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-lg border border-emerald-500/30 transition-all">
+                                <button onclick="markAsDisposed('${item.id}')" title="폐기 완료 처리" class="p-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-lg border border-emerald-500/30 transition-all active:scale-95">
                                     <i data-lucide="check" class="w-4 h-4"></i>
                                 </button>
                             ` : `
-                                <button onclick="toggleItemStatus('${item.id}')" title="상태 복원" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg transition-all">
+                                <button onclick="toggleItemStatus('${item.id}')" title="상태 복원" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg transition-all active:scale-95">
                                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                                 </button>
                             `}
-                            <button onclick="deleteItem('${item.id}')" title="삭제" class="p-2 bg-slate-800 hover:bg-red-600/20 text-slate-500 hover:text-red-400 rounded-lg transition-all">
+                            <button onclick="deleteItem('${item.id}')" title="삭제" class="p-2 bg-slate-800 hover:bg-red-600/20 text-slate-500 hover:text-red-400 rounded-lg transition-all active:scale-95">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -1060,7 +1196,7 @@
             renderCalendar();
             renderList();
             playBeepSound();
-            showToast('폐기 완료 처리가 진행되었습니다.', 'check-circle', 'text-emerald-400');
+            showToast('폐기 완료 처리가 완료되었습니다.', 'check-circle', 'text-emerald-400');
         }
 
         function changeQty(id, delta) {
@@ -1136,9 +1272,9 @@
                 document.getElementById('camera-controls').classList.remove('hidden');
             } catch (err) {
                 if (window.location.protocol === 'file:') {
-                    showToast('보안 정책상 로컬 파일(file://)에서는 카메라를 켤 수 없습니다. [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-rose-400');
+                    showToast('보안 정책상 로컬 파일(file://)에서는 웹캠을 켤 수 없습니다. [스마트폰 카메라 촬영] 또는 [갤러리 선택]을 이용해 주세요.', 'alert-circle', 'text-rose-400');
                 } else {
-                    showToast('카메라 권한이 없거나 활성화할 수 없습니다. [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-amber-400');
+                    showToast('카메라 권한을 얻을 수 없습니다. [갤러리 선택] 또는 [스마트폰 카메라 촬영]을 이용해 주세요.', 'alert-circle', 'text-amber-400');
                 }
             }
         }
@@ -1787,7 +1923,7 @@
             try {
                 const todayStr = formatDate(new Date());
                 const urgentItems = items.filter(i => i.date === todayStr && i.status === 'PENDING');
-                const itemListStr = urgentItems.length > 0 ? urgentItems.map(i => `${i.name} (${i.qty}개)`).join(', ') : '삼각김밥, 훈제란, 어묵 한그릇';
+                const itemListStr = urgentItems.length > 0 ? urgentItems.map(i => `${i.name} (${i.qty}개)`).join(', ') : '등록된 임박 상품 없음';
 
                 const apiKey = getApiKey();
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
