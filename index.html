@@ -2,7 +2,7 @@
 <html lang="ko" class="h-full bg-slate-900 text-slate-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>편의점 스마트 폐기 관리 시스템</title>
 
     <!-- PWA & Mobile Web App Meta Tags -->
@@ -16,6 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons Library -->
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -39,24 +40,33 @@
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+        /* Mobile Touch & Safe Area Optimizations */
+        .pb-safe { padding-bottom: max(1.25rem, env(safe-area-inset-bottom)); }
+        .pt-safe { padding-top: max(0.5rem, env(safe-area-inset-top)); }
+        button, input, select, label { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased overflow-x-hidden">
+<body class="h-full flex flex-col font-sans antialiased overflow-x-hidden bg-slate-900 text-slate-100 pb-safe">
 
-    <!-- Top Header -->
+    <!-- TOP HEADER -->
     <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- Clock Display -->
             <div class="flex items-center space-x-2 text-xs font-semibold text-slate-300 bg-slate-900/60 px-3 py-2 rounded-xl border border-slate-700/50">
                 <i data-lucide="clock" class="w-4 h-4 text-indigo-400"></i>
                 <span id="current-time-display">불러오는 중...</span>
             </div>
-            <div class="flex items-center space-x-2 sm:space-x-3">
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-1.5 sm:space-x-3">
                 <!-- PWA Install Button -->
-                <button id="pwa-install-btn" onclick="installPWA()" class="hidden flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95 animate-bounce">
+                <button id="pwa-install-btn" onclick="installPWA()" class="hidden flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-2.5 py-2 rounded-xl text-xs transition-all shadow-md active:scale-95">
                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
                     <span class="hidden sm:inline">앱 설치</span>
                 </button>
-                <!-- Data Backup / Restore Buttons -->
+                
+                <!-- Data Backup / Restore -->
                 <button onclick="exportDataJSON()" title="데이터 백업" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-2.5 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
                     <i data-lucide="database" class="w-3.5 h-3.5 text-cyan-400"></i>
                     <span class="hidden sm:inline">백업</span>
@@ -66,19 +76,26 @@
                     <span class="hidden sm:inline">복원</span>
                     <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="importDataJSON(event)">
                 </label>
+
+                <!-- Print & Export -->
                 <button onclick="openPrintModal()" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
                     <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-400"></i>
                     <span class="hidden sm:inline">인쇄 / 내보내기</span>
                 </button>
+
+                <!-- Gemini API Key -->
                 <button onclick="openApiKeyModal()" id="api-key-btn" class="flex items-center space-x-1.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-medium px-3 py-2 rounded-xl text-xs transition-all border border-slate-600/80 shadow-sm">
                     <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
                     <span class="hidden sm:inline">API 키</span>
                 </button>
-                <!-- AI Smart Assistant Trigger Button -->
+
+                <!-- AI Assistant Trigger -->
                 <button onclick="openAiModal()" class="flex items-center space-x-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium px-3 py-2 rounded-xl shadow-lg shadow-purple-600/30 transition-all active:scale-95 text-xs sm:text-sm">
                     <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
                     <span>AI 비서</span>
                 </button>
+
+                <!-- Register Item -->
                 <button onclick="openRegisterModal()" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-95 text-xs sm:text-sm">
                     <i data-lucide="camera" class="w-4 h-4"></i>
                     <span>사진 등록</span>
@@ -87,10 +104,19 @@
         </div>
     </header>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- MOBILE FLOATING ACTION BUTTON (FAB) FOR ONE-HAND SCAN -->
+    <button onclick="openRegisterModal()" aria-label="사진으로 등록" class="sm:hidden fixed bottom-6 right-5 z-40 bg-gradient-to-tr from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white p-4 rounded-full shadow-2xl shadow-indigo-500/50 active:scale-90 transition-all flex items-center justify-center border border-indigo-400/40">
+        <i data-lucide="camera" class="w-6 h-6"></i>
+        <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-amber-400 border-2 border-slate-900"></span>
+        </span>
+    </button>
 
-        <!-- Top Stats Row -->
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 pb-20 sm:pb-6">
+
+        <!-- Top Overview Stats Cards -->
         <div class="lg:col-span-12 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex items-center space-x-3.5">
                 <div class="p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 shrink-0">
@@ -133,9 +159,8 @@
             </div>
         </div>
 
-        <!-- LEFT / MAIN: Calendar Area -->
+        <!-- LEFT COLUMN: Calendar View -->
         <section class="lg:col-span-7 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
-            <!-- Calendar Navigation Header -->
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center space-x-3">
                     <h2 class="text-xl font-bold text-white flex items-center gap-2">
@@ -156,7 +181,6 @@
                 </div>
             </div>
 
-            <!-- Calendar Days Header -->
             <div class="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2">
                 <div class="text-red-400">일</div>
                 <div>월</div>
@@ -167,12 +191,10 @@
                 <div class="text-indigo-400">토</div>
             </div>
 
-            <!-- Calendar Days Grid -->
             <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 min-h-[360px]">
-                <!-- Dynamically populated JS -->
+                <!-- Populated via JavaScript -->
             </div>
 
-            <!-- Calendar Legend -->
             <div class="flex items-center justify-end space-x-4 mt-4 pt-4 border-t border-slate-700/50 text-xs text-slate-400">
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> 오늘 폐기</span>
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 내일 폐기</span>
@@ -180,7 +202,7 @@
             </div>
         </section>
 
-        <!-- RIGHT: Item Details & Filter List -->
+        <!-- RIGHT COLUMN: Product List & Filters -->
         <section class="lg:col-span-5 bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col shadow-xl">
             <div class="flex items-center justify-between mb-3">
                 <div>
@@ -194,7 +216,6 @@
                 </button>
             </div>
 
-            <!-- Search & Sort Bar -->
             <div class="flex items-center space-x-2 mb-3">
                 <div class="relative flex-1">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
@@ -207,7 +228,6 @@
                 </select>
             </div>
 
-            <!-- Filter Tabs -->
             <div class="flex space-x-1 p-1 bg-slate-900/60 rounded-xl mb-4 border border-slate-700/40 text-xs">
                 <button onclick="setFilter('ALL')" id="filter-btn-ALL" class="flex-1 py-1.5 font-medium rounded-lg bg-indigo-600 text-white transition-all shadow">전체</button>
                 <button onclick="setFilter('URGENT')" id="filter-btn-URGENT" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">오늘/내일</button>
@@ -215,19 +235,17 @@
                 <button onclick="setFilter('DISPOSED')" id="filter-btn-DISPOSED" class="flex-1 py-1.5 font-medium rounded-lg text-slate-400 hover:text-white transition-all">완료됨</button>
             </div>
 
-            <!-- Product List Scroll Area -->
             <div id="product-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 max-h-[460px]">
-                <!-- Dynamically populated JS -->
+                <!-- Populated via JavaScript -->
             </div>
         </section>
 
     </main>
 
-    <!-- CAMERA / PHOTO UPLOAD MODAL -->
+    <!-- MODAL 1: CAMERA / PHOTO REGISTRATION -->
     <div id="register-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
             
-            <!-- Modal Header -->
             <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
                     <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400"></i>
@@ -238,10 +256,8 @@
                 </button>
             </div>
 
-            <!-- Modal Body -->
             <div class="p-6 overflow-y-auto custom-scrollbar space-y-5">
 
-                <!-- Auto Register Toggle Bar -->
                 <div class="flex items-center justify-between bg-indigo-950/50 border border-indigo-500/30 rounded-xl p-3">
                     <div class="flex items-center space-x-2">
                         <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
@@ -253,182 +269,100 @@
                     </label>
                 </div>
 
-                <!-- Photo Capture / Upload Area -->
                 <div class="space-y-2">
                     <label class="block text-xs font-semibold text-slate-300">상품 포장지 또는 유통기한 라벨 촬영</label>
                     <div id="camera-view-container" class="relative bg-slate-900 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl overflow-hidden min-h-[220px] flex flex-col items-center justify-center transition-all group">
                         
-                        <!-- Video Stream for Live Camera -->
                         <video id="webcam-video" autoplay playsinline class="hidden w-full h-56 object-cover"></video>
                         <canvas id="photo-canvas" class="hidden"></canvas>
-                        
-                        <!-- Image Preview -->
                         <img id="image-preview" class="hidden w-full h-56 object-contain bg-black/40" />
 
-                        <!-- Default Placeholder State -->
                         <div id="upload-placeholder" class="text-center p-6 space-y-3">
-                            <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
-                                <i data-lucide="camera" class="w-6 h-6"></i>
-                            </div>
-                            <div class="text-xs text-slate-400">
-                                <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
-                                <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
-                            </div>
-                            <div class="flex items-center justify-center gap-2 pt-2">
-                                <button type="button" onclick="startCamera()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg flex items-center gap-1.5 shadow">
-                                    <i data-lucide="video" class="w-3.5 h-3.5"></i> 실시간 촬영
-                                </button>
-                                <label class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-lg cursor-pointer flex items-center gap-1.5">
-                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> 사진 파일 선택
-                                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Live Camera Controls Overlay -->
-                        <div id="camera-controls" class="hidden absolute bottom-3 inset-x-0 flex justify-center space-x-3 z-10">
-                            <button type="button" onclick="capturePhoto()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg flex items-center gap-1.5">
-                                <i data-lucide="aperture" class="w-4 h-4"></i> 찰칵! 캡처하기
-                            </button>
-                            <button type="button" onclick="stopCamera()" class="px-3 py-2 bg-slate-800/80 text-slate-300 hover:text-white text-xs rounded-xl border border-slate-600">
-                                취소
-                            </button>
-                        </div>
+                    <div class="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                        <i data-lucide="camera" class="w-6 h-6"></i>
                     </div>
-                </div>
-
-                <!-- AI Processing Spinner -->
-                <div id="ai-loading" class="hidden bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-4 flex items-center space-x-3 animate-pulse">
-                    <div class="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
-                    <div>
-                        <p class="text-xs font-bold text-indigo-300">Gemini AI가 사진 분석 중...</p>
-                        <p class="text-[11px] text-indigo-400/80">유통기한 날짜와 상품 이름을 자동으로 추출하고 있습니다.</p>
+                    <div class="text-xs text-slate-400">
+                        <p class="font-medium text-slate-200">카메라로 직접 찍거나 사진 파일 선택</p>
+                        <p class="text-slate-500 mt-1">유통기한 글자가 잘 보이도록 촬영해 주세요.</p>
                     </div>
-                </div>
-
-                <!-- Product Form -->
-                <form id="product-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">상품명 *</label>
-                        <input type="text" id="input-name" required placeholder="예: 참치마요 삼각김밥" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">폐기/유통기한 일자 *</label>
-                            <input type="date" id="input-date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block text-xs font-medium text-slate-400">폐기 시각 *</label>
-                                <div class="flex space-x-1 text-[10px]">
-                                    <button type="button" onclick="setTimePreset('14:00')" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">14시(주간FF)</button>
-                                    <button type="button" onclick="setTimePreset('02:00')" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">02시(야간FF)</button>
-                                    <button type="button" onclick="setTimePreset('00:00')" class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700">00시(자정)</button>
-                                </div>
-                            </div>
-                            <input type="time" id="input-time" required value="00:00" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1">카테고리</label>
-                            <select id="input-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500">
-                                <option value="도시락/김밥/샌드위치">도시락/김밥/샌드위치</option>
-                                <option value="유제품/음료">유제품/음료</option>
-                                <option value="신선식품/빵류">신선식품/빵류</option>
-                                <option value="안주/냉장가공">안주/냉장가공</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block text-xs font-medium text-slate-400">수량 *</label>
-                                <div class="flex space-x-1 text-[10px]">
-                                    <button type="button" onclick="adjustInputQty(-1)" class="px-1.5 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded hover:bg-slate-700">-1</button>
-                                    <button type="button" onclick="adjustInputQty(1)" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">+1</button>
-                                    <button type="button" onclick="adjustInputQty(5)" class="px-1.5 py-0.5 bg-indigo-950 border border-indigo-700/60 text-indigo-300 rounded hover:bg-indigo-900">+5</button>
-                                </div>
-                            </div>
-                            <input type="number" id="input-qty" min="1" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500">
-                        </div>
-                    </div>
-
-                    <div class="pt-2 flex items-center justify-end space-x-3">
-                        <button type="button" onclick="closeRegisterModal()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-medium hover:bg-slate-700">
-                            취소
+                    <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+                        <!-- Direct Smartphone Native Camera Trigger -->
+                        <button type="button" onclick="document.getElementById('smartphone-camera-input').click()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow active:scale-95 transition-all">
+                            <i data-lucide="camera" class="w-4 h-4"></i> 스마트폰 카메라 촬영
                         </button>
-                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-lg shadow-indigo-600/30">
-                            등록 완료
+                        <input type="file" id="smartphone-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+                        
+                        <button type="button" onclick="startCamera()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl flex items-center gap-1.5 active:scale-95 transition-all">
+                            <i data-lucide="video" class="w-3.5 h-3.5"></i> 웹캠 실시간
                         </button>
+                        <label class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all">
+                            <i data-lucide="image" class="w-3.5 h-3.5"></i> 갤러리 선택
+                            <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        </label>
                     </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- API KEY SETTINGS MODAL -->
-    <div id="apikey-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i data-lucide="key" class="w-5 h-5 text-amber-400"></i>
-                    Gemini API 키 설정
-                </h3>
-                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            
-            <p class="text-xs text-slate-300 leading-relaxed">
-                Google AI Studio에서 무료로 발급받은 Gemini API 키를 입력하면 개인 API 호출 한도로 안전하게 스마트 OCR 상품 인식을 이용할 수 있습니다.
-            </p>
-
-            <div>
-                <div class="flex items-center justify-between mb-1">
-                    <label class="block text-xs font-semibold text-slate-400">Google Gemini API Key</label>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-[11px] text-amber-400 hover:underline flex items-center gap-1 font-medium">
-                        무료 API 키 발급받기 <i data-lucide="external-link" class="w-3 h-3"></i>
-                    </a>
                 </div>
-                <input type="password" id="input-api-key" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+
+                <!-- Month Picker (Shown when MONTH radio is checked) -->
+                <div id="print-month-container" class="hidden bg-indigo-950/40 border-2 border-indigo-500/80 rounded-xl p-3.5 space-y-2.5 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-indigo-200 flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> 출력 대상 월 지정
+                        </span>
+                        <div class="flex items-center space-x-1">
+                            <button type="button" onclick="adjustPrintMonth(-1)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-[11px] text-slate-200">◀ 이전달</button>
+                            <button type="button" onclick="setPrintMonthToCurrent()" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 rounded text-[11px] text-white">현재 달력 월</button>
+                            <button type="button" onclick="adjustPrintMonth(1)" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-[11px] text-slate-200">다음달 ▶</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="print-year-select" onchange="updatePrintMonthPickerFromSelects()" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500">
+                            <!-- Populated JS -->
+                        </select>
+                        <select id="print-month-select" onchange="updatePrintMonthPickerFromSelects()" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-white focus:outline-none focus:border-indigo-500">
+                            <!-- Populated JS -->
+                        </select>
+                    </div>
+                    <div id="print-month-item-count" class="text-[11px] text-indigo-300 font-medium">
+                        <!-- JS Item count summary -->
+                    </div>
+                </div>
+
+                <!-- 2. Style Selection -->
+                <div>
+                    <label class="block font-semibold text-slate-200 mb-2">2. 양식 스타일 선택</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-style" value="CHECKLIST" checked class="accent-indigo-500">
+                            <span>📋 점검 체크리스트 (서명란 포함)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 bg-slate-900/80 border border-slate-700 p-2.5 rounded-xl cursor-pointer hover:border-indigo-500 transition-all">
+                            <input type="radio" name="print-style" value="SIMPLE" class="accent-indigo-500">
+                            <span>📊 단순 일괄 목록표</span>
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex items-center justify-between pt-2">
-                <button type="button" onclick="clearApiKey()" class="text-xs text-slate-400 hover:text-rose-400 underline">
-                    키 초기화
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+                <button type="button" onclick="closePrintModal()" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700">
+                    취소
                 </button>
                 <div class="flex space-x-2">
-                    <button type="button" onclick="closeApiKeyModal()" class="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs hover:bg-slate-700">
-                        취소
+                    <button type="button" onclick="downloadPrintableHtml()" class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium border border-slate-600 flex items-center gap-1.5 shadow">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> HTML 파일 저장
                     </button>
-                    <button type="button" onclick="saveApiKey()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow">
-                        저장
+                    <button type="button" onclick="executeDirectPrint()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow flex items-center gap-1.5">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i> 바로 인쇄하기
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PRINT & EXPORT MODAL -->
-    <div id="print-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i data-lucide="printer" class="w-5 h-5 text-blue-400"></i>
-                    편의점 폐기 점검표 인쇄 & HTML 내보내기
-                </h3>
-                <button onclick="closePrintModal()" class="text-slate-400 hover:text-white">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-    <!-- AI GEMINI HUB MODAL -->
+    <!-- MODAL 4: AI GEMINI HUB MODAL -->
     <div id="ai-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-200">
-            <!-- Modal Header -->
             <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
                     <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
@@ -441,7 +375,7 @@
 
             <!-- Tab Navigation -->
             <div class="flex border-b border-slate-700 bg-slate-900/60 px-4 pt-2 space-x-1 text-xs font-semibold overflow-x-auto">
-                <button id="ai-tab-analytics-btn" onclick="switchAiTab('analytics')" class="px-3 py-2 text-indigo-400 border-b-2 border-indigo-500 rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <button id="ai-tab-analytics-btn" onclick="switchAiTab('analytics')" class="px-3 py-2 text-indigo-400 border-b-2 border-indigo-500 rounded-t-lg transition-all flex items-center gap-1.5 whitespace-nowrap font-bold">
                     <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
                     <span>폐기 분석 & 발주 피드백</span>
                 </button>
@@ -459,7 +393,6 @@
                 </button>
             </div>
 
-            <!-- Modal Content Body -->
             <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
                 
                 <!-- TAB 1: Analytics Report -->
@@ -561,7 +494,7 @@
 
         // Sample initial items based on CVS real product photos
         const initialSampleData = [
-            { id: '1', name: 'CJ 1등급 계란으로 만든 훈제대란', date: '2026-08-07', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
+            { id: '1', name: 'CJ 훈제대란', date: '2026-08-07', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
             { id: '2', name: '행복담기 동의 구운란', date: '2026-08-19', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
             { id: '3', name: '삼호어묵 시원한 오뎅 한그릇', date: '2026-08-17', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'PENDING', image: null },
             { id: '4', name: '동원 스위트 한스틱 어묵', date: '2026-08-01', time: '00:00', category: '안주/냉장가공', qty: 1, status: 'DISPOSED', image: null },
@@ -862,12 +795,10 @@
 
             let filtered = [...items];
 
-            // Filter by Date Click
             if (selectedFilterDate) {
                 filtered = filtered.filter(i => i.date === selectedFilterDate);
             }
 
-            // Filter by Tab
             if (currentTabFilter === 'URGENT') {
                 filtered = filtered.filter(i => (i.date === todayStr || i.date === tomorrowStr) && i.status === 'PENDING');
             } else if (currentTabFilter === 'ACTIVE') {
@@ -876,7 +807,6 @@
                 filtered = filtered.filter(i => i.status === 'DISPOSED');
             }
 
-            // Filter by Search Keyword
             if (searchKeyword) {
                 filtered = filtered.filter(i => 
                     i.name.toLowerCase().includes(searchKeyword) || 
@@ -884,7 +814,6 @@
                 );
             }
 
-            // Sorting Modes
             filtered.sort((a, b) => {
                 if (sortMode === 'EXPIRY_ASC') {
                     return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
@@ -1063,7 +992,7 @@
                 document.getElementById('camera-controls').classList.remove('hidden');
             } catch (err) {
                 if (window.location.protocol === 'file:') {
-                    showToast('보안 정책상 로컬 파일(file://)에서는 카메라를 켤 수 없습니다. 로컬 웹 서버를 열거나 [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-rose-400');
+                    showToast('보안 정책상 로컬 파일(file://)에서는 카메라를 켤 수 없습니다. [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-rose-400');
                 } else {
                     showToast('카메라 권한이 없거나 활성화할 수 없습니다. [사진 파일 선택]을 이용해 주세요.', 'alert-circle', 'text-amber-400');
                 }
@@ -1199,20 +1128,17 @@
                 if (jsonText) {
                     const parsed = JSON.parse(jsonText);
 
-                    // 1. 제품이 아니거나 유통기한 인식이 불가한 경우
                     if (!parsed.isProduct || !parsed.expirationDate) {
                         showToast('제품 또는 유통기한을 인식하지 못했습니다. 직접 입력해 주세요.', 'alert-triangle', 'text-amber-400');
                         if (parsed.productName) document.getElementById('input-name').value = parsed.productName;
                         return;
                     }
 
-                    // 2. 폼 입력창에 데이터 채우기
                     if (parsed.productName) document.getElementById('input-name').value = parsed.productName;
                     if (parsed.expirationDate) document.getElementById('input-date').value = parsed.expirationDate;
                     if (parsed.expirationTime) document.getElementById('input-time').value = parsed.expirationTime;
                     if (parsed.category) document.getElementById('input-category').value = parsed.category;
 
-                    // 3. 자동 등록 옵션 체크 여부에 따른 처리
                     const isAutoSubmit = document.getElementById('auto-submit-toggle')?.checked;
 
                     if (isAutoSubmit) {
@@ -1329,6 +1255,10 @@
             document.getElementById('print-modal').classList.remove('hidden');
         }
 
+        function closePrintModal() {
+            document.getElementById('print-modal').classList.add('hidden');
+        }
+
         function populatePrintYearMonthDropdowns(targetYear, targetMonth) {
             const yearSelect = document.getElementById('print-year-select');
             const monthSelect = document.getElementById('print-month-select');
@@ -1337,7 +1267,6 @@
             const currYear = targetYear !== undefined ? targetYear : currentDate.getFullYear();
             const currMonth = targetMonth !== undefined ? targetMonth : currentDate.getMonth() + 1;
 
-            // 연도 드롭다운 생성 (현재 연도 기준 -2년 ~ +3년)
             const startYear = currentDate.getFullYear() - 2;
             const endYear = currentDate.getFullYear() + 3;
             let yearHtml = '';
@@ -1346,7 +1275,6 @@
             }
             yearSelect.innerHTML = yearHtml;
 
-            // 월 드롭다운 생성 (1월 ~ 12월)
             let monthHtml = '';
             for (let m = 1; m <= 12; m++) {
                 monthHtml += `<option value="${m}" ${m === currMonth ? 'selected' : ''}>${m}월</option>`;
@@ -1368,13 +1296,9 @@
 
             const count = items.filter(i => i.date.startsWith(monthPrefix)).length;
             if (countEl) {
-                countEl.innerHTML = `<i data-lucide="package" class="w-3 h-3 inline mr-1 text-indigo-400"></i>선택 월 (${y}년 ${parseInt(m)}월): <strong class="text-indigo-300 font-bold">${count}건</strong> 항목 존재`;
+                countEl.innerHTML = `<i data-lucide="package" class="w-3.5 h-3.5 inline mr-1 text-indigo-400"></i>선택 월 (${y}년 ${parseInt(m)}월): <strong class="text-indigo-300 font-bold">${count}건</strong> 항목 존재`;
                 lucide.createIcons();
             }
-        }
-
-        function closePrintModal() {
-            document.getElementById('print-modal').classList.add('hidden');
         }
 
         function togglePrintMonthPicker() {
@@ -1566,18 +1490,30 @@
 
         function executeDirectPrint() {
             const printContent = generatePrintableHtmlContent();
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.focus();
-                setTimeout(() => {
-                    printWindow.print();
-                    closePrintModal();
-                }, 300);
-            } else {
-                showToast('팝업 차단을 해제한 후 다시 시도해 주세요.', 'alert-circle', 'text-amber-400');
+            
+            let iframe = document.getElementById('print-iframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'print-iframe';
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                document.body.appendChild(iframe);
             }
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(printContent);
+            doc.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                closePrintModal();
+            }, 400);
         }
 
         function downloadPrintableHtml() {
@@ -1607,18 +1543,6 @@
             closePrintModal();
         }
 
-        window.onload = function() {
-            lucide.createIcons();
-            initPWA();
-            loadItems();
-            updateClock();
-            setInterval(updateClock, 1000);
-            renderCalendar();
-            renderList();
-            updateStats();
-        };
-
-        // AI HUB MODAL & GEMINI API INTEGRATION
         function openAiModal() {
             document.getElementById('ai-modal').classList.remove('hidden');
             switchAiTab('analytics');
@@ -1667,7 +1591,6 @@
             return fetch(url, options);
         }
 
-        // 1. AI Analytics Report (gemini-3-flash-preview)
         async function generateAiAnalyticsReport() {
             const spinner = document.getElementById('ai-modal-spinner');
             const output = document.getElementById('ai-analytics-output');
@@ -1711,7 +1634,6 @@
             }
         }
 
-        // 2. AI Marketing Copy & Recipes (gemini-3-flash-preview)
         async function generateAiMarketingCopy() {
             const spinner = document.getElementById('ai-modal-spinner');
             const output = document.getElementById('ai-marketing-output');
@@ -1752,7 +1674,6 @@
             }
         }
 
-        // 3. AI Promotion Poster Image (gemini-3.1-flash-image)
         async function generateAiPosterImage() {
             const spinner = document.getElementById('ai-modal-spinner');
             const output = document.getElementById('ai-poster-output');
@@ -1801,7 +1722,6 @@
             }
         }
 
-        // 4. AI Audio Briefing (gemini-2.5-flash-preview-tts)
         async function generateAiAudioBriefing() {
             const statusEl = document.getElementById('ai-tts-status');
             const player = document.getElementById('ai-tts-player');
@@ -1864,7 +1784,6 @@
             }
         }
 
-        // PCM to WAV Audio Helper Functions
         function base64ToArrayBuffer(base64) {
             const binaryString = window.atob(base64);
             const len = binaryString.length;
@@ -1910,6 +1829,17 @@
                 view.setUint8(offset + i, string.charCodeAt(i));
             }
         }
+
+        window.onload = function() {
+            lucide.createIcons();
+            initPWA();
+            loadItems();
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderCalendar();
+            renderList();
+            updateStats();
+        };
     </script>
 </body>
 </html>
